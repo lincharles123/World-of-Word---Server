@@ -1,0 +1,37 @@
+{
+  "name": "world-of-word---server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/src/main",
+  "scripts": {
+    "build": "nest build",
+    "start:dev": "nest start --watch",
+    "start:prod": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lincharles123/World-of-Word---Server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lincharles123/World-of-Word---Server/issues"
+  },
+  "homepage": "https://github.com/lincharles123/World-of-Word---Server#readme",
+  "dependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/platform-socket.io": "^11.1.6",
+    "@nestjs/websockets": "^11.1.6",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.10",
+    "@nestjs/schematics": "^11.0.7",
+    "@types/node": "^24.3.1",
+    "typescript": "^5.9.2"
+  }
+}
