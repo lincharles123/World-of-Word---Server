@@ -25,12 +25,16 @@ export class GameService {
     }
 
     addMobileClient(client: Socket, username: string) : boolean {
-        // Limit to 2 mobile clients
-        if (Object.keys(this.clients).length > 2)
-            return false;
-
         this.clients[username] = client;
         return true;
+    }
+
+    checkUsername(username: string) : boolean {
+        return username in this.clients;
+    }
+
+    checkMaxClients() : boolean {
+        return Object.keys(this.clients).length === 1;
     }
 
     removeClient(client: Socket) : void {

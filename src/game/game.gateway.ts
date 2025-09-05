@@ -40,11 +40,15 @@ export class GameGateway
       this.logger.log(`Game client id: ${client.id} joined`);
     }
     else {
-      if (!this.gameService.addMobileClient(client, data.username)){
-        this.logger.warn(`Mobile client id: ${client.id} failed to join - max clients reached`);
-        client.emit('join-fail', 'Max mobile clients reached');
+      if (this.gameService.checkUsername(data.username)) {
+        this.logger.warn(`Mobile client id: ${client.id} failed to join - username ${data.username} already taken`);
+        client.emit('join-fail', 'Username already taken');
         client.disconnect();
-        return;
+      }
+      if (this.gameService.checkMaxClients()) {
+        this.logger.warn(`Mobile client id: ${client.id} failed to join - max clients reached`);
+        client.emit('join-fail', 'Max clients reached');
+        client.disconnect();
       }
       
       client.emit('join-success', '');
