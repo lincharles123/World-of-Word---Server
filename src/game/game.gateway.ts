@@ -7,7 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 
 @WebSocketGateway()
@@ -20,24 +20,61 @@ export class GameGateway
 
   constructor(private readonly gameService: GameService) {};
 
-  handleConnection(client: any, ...args: any[]) {
-    this.gameService.addClient(client);
+  handleConnection(client: Socket, ...args: any[]) : void {
     this.logger.log(`Client id: ${client.id} connected`);
-    console.log('connected');
   }
 
-  handleDisconnect(client: any) {
-    this.gameService.removeClient(client);
+  handleDisconnect(client: Socket) : void{
+    if (this.gameService.getGameClients() === client)
+      this.gameService.setGameClient(null);
+    else
+      this.gameService.removeClient(client);
+    
     this.logger.log(`Client id:${client.id} disconnected`);
   }
 
+  @SubscribeMessage("join")
+  onJoin(client: Socket, data: any) : void {
+    if (data.role === 'game'){
+      this.gameService.setGameClient(client);
+      this.logger.log(`Game client id: ${client.id} joined`);
+    }
+    else {
+      if (!this.gameService.addMobileClient(client, data.username)){
+        this.logger.warn(`Mobile client id: ${client.id} failed to join - max clients reached`);
+        client.emit('join-fail', 'Max mobile clients reached');
+        client.disconnect();
+        return;
+      }
+      
+      client.emit('join-success', '');
+      this.logger.log(`Mobile client id: ${client.id} joined as ${data.username}`);
+    }
+  }
+  
+  @SubscribeMessage("init-game")
+  init(client: Socket, data: any) : void {
+    this.gameService.init(data.effect_duration, data.effect_list);
+    this.logger.log(`Game initialized by client id: ${client.id}`);
+  } 
+  
   @SubscribeMessage("instruction")
-  handleAction(client: any, data: any) {
+  handleInstruction(client: Socket, data: any) : void {
     this.logger.log(`Instruction received from client id: ${client.id}`);
     this.logger.debug(`Payload: ${data}`);
-    return {
-      event: "",
-      data: "",
-    };
+
+    client.emit('instruction', {success: true});
+  }
+
+  @SubscribeMessage("update-map")
+  updateMap(client: Socket, data: any) : void {
+    if (this.gameService.getGameClients() !== client) {
+      this.logger.warn(`Client id: ${client.id} is not authorized to send map updates`);
+      client.emit('update-map', {success: false, error: 'Not authorized'});
+      return;
+    }
+
+
+
   }
 }
