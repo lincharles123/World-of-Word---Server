@@ -5,9 +5,6 @@ import { RateLimiterService } from '../game/rate-limiter.service';
 export class RateLimitAdminController {
   constructor(private readonly rateLimiterService: RateLimiterService) {}
 
-  /**
-   * Obtenir toutes les statistiques de rate limiting
-   */
   @Get('stats')
   getAllStats() {
     return {
@@ -16,9 +13,6 @@ export class RateLimitAdminController {
     };
   }
 
-  /**
-   * Obtenir les statistiques pour un identifiant spécifique
-   */
   @Get('stats/:identifier/:type')
   getStatsForIdentifier(
     @Param('identifier') identifier: string,
@@ -32,9 +26,6 @@ export class RateLimitAdminController {
     };
   }
 
-  /**
-   * Réinitialiser les limites pour un identifiant spécifique
-   */
   @Post('reset/:identifier')
   resetLimits(
     @Param('identifier') identifier: string,
@@ -49,9 +40,6 @@ export class RateLimitAdminController {
     };
   }
 
-  /**
-   * Obtenir la configuration actuelle du rate limiting
-   */
   @Get('config')
   getConfig() {
     return {

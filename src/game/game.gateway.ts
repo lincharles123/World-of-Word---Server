@@ -1,4 +1,4 @@
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -10,7 +10,8 @@ import {
 import { Server } from 'socket.io';
 import { GameService } from './game.service';
 import { RateLimiterService } from './rate-limiter.service';
-import { WebSocketRateLimitGuard } from './websocket-rate-limit.guard';
+import { CooldownService } from './cooldown.service';
+import { AntiSpamProtection, CooldownProtection } from './anti-spam.decorator';
 
 @WebSocketGateway()
 export class GameGateway
@@ -22,7 +23,8 @@ export class GameGateway
 
   constructor(
     private readonly gameService: GameService,
-    private readonly rateLimiterService: RateLimiterService
+    private readonly rateLimiterService: RateLimiterService,
+    private readonly cooldownService: CooldownService
   ) {};
 
   handleConnection(client: any, ...args: any[]) {
@@ -87,7 +89,7 @@ export class GameGateway
     return client.conn?.remoteAddress || 'unknown';
   }
 
-  @UseGuards(WebSocketRateLimitGuard)
+  @AntiSpamProtection()
   @SubscribeMessage("instruction")
   handleAction(client: any, data: any) {
     this.logger.log(`Instruction received from client id: ${client.id}`);
@@ -104,7 +106,7 @@ export class GameGateway
     return response;
   }
 
-  @UseGuards(WebSocketRateLimitGuard)
+  @AntiSpamProtection()
   @SubscribeMessage("testMessage")
   handleTestMessage(client: any, data: any) {
     this.logger.log(`Test message received from client id: ${client.id}`);
@@ -123,7 +125,7 @@ export class GameGateway
     });
   }
 
-  @UseGuards(WebSocketRateLimitGuard)
+  @CooldownProtection()
   @SubscribeMessage("getStatus")
   handleGetStatus(client: any, data: any) {
     this.logger.log(`Status request from client id: ${client.id}`);
@@ -137,5 +139,29 @@ export class GameGateway
         yourId: client.id
       }
     };
+  }
+
+  @CooldownProtection()
+  @SubscribeMessage("quickMessage")
+  handleQuickMessage(client: any, data: any) {
+    this.logger.log(`Quick message from client id: ${client.id}`);
+    
+    client.emit('quickResponse', {
+      message: 'Message rapide reçu !',
+      cooldownStatus: this.cooldownService.getCooldownStats(client.id),
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  @SubscribeMessage("getCooldownStatus")
+  handleGetCooldownStatus(client: any, data: any) {
+    const stats = this.cooldownService.getCooldownStats(client.id);
+    
+    client.emit('cooldownStatusResponse', {
+      clientId: client.id,
+      cooldownStats: stats,
+      config: this.cooldownService.getConfig(),
+      timestamp: new Date().toISOString()
+    });
   }
 }

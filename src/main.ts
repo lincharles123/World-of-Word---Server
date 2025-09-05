@@ -5,8 +5,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     app.enableCors({ origin: "*"});
-    app.useStaticAssets('./test.html');
-    await app.listen(process.env.PORT || 3000);
+    app.useStaticAssets('./', {
+        prefix: '/',
+    });
+    await app.listen(process.env.PORT || 3002);
 }
 
 bootstrap();
