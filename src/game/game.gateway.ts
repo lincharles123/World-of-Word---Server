@@ -38,22 +38,19 @@ export class GameGateway
     if (data.role === 'game'){
       this.gameService.setGameClient(client);
       this.logger.log(`Game client id: ${client.id} joined`);
+      return;
     }
-    else {
-      if (this.gameService.checkUsername(data.username)) {
-        this.logger.warn(`Mobile client id: ${client.id} failed to join - username ${data.username} already taken`);
-        client.emit('join-fail', 'Username already taken');
-        client.disconnect();
-      }
-      if (this.gameService.checkMaxClients()) {
-        this.logger.warn(`Mobile client id: ${client.id} failed to join - max clients reached`);
-        client.emit('join-fail', 'Max clients reached');
-        client.disconnect();
-      }
+
+    try {
+      this.gameService.addMobileClient(client, data.username);
+    } catch (e) {
+      this.logger.warn(`Mobile client id: ${client.id} failed to join: ${e.message}`);
+      client.emit('join-fail', e.message);
+      client.disconnect();
+    }
       
-      client.emit('join-success', '');
-      this.logger.log(`Mobile client id: ${client.id} joined as ${data.username}`);
-    }
+    client.emit('join-success', '');
+    this.logger.log(`Mobile client id: ${client.id} joined as ${data.username}`);
   }
   
   @SubscribeMessage("init-game")
@@ -65,9 +62,17 @@ export class GameGateway
   @SubscribeMessage("instruction")
   handleInstruction(client: Socket, data: any) : void {
     this.logger.log(`Instruction received from client id: ${client.id}`);
-    this.logger.debug(`Payload: ${data}`);
 
-    client.emit('instruction', {success: true});
+    let {id, name} = data;
+
+    try {
+      this.gameService.addEffect(id, name);
+      this.logger.log(`Effect ${name} added`);
+      client.emit('apply-success', {});
+    } catch (e) {
+      this.logger.warn(`Failed to add effect ${name} from client id: ${client.id}: ${e.message}`);
+      client.emit('apply-fail', e.message);
+    }
   }
 
   @SubscribeMessage("update-map")
