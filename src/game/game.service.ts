@@ -18,4 +18,25 @@ export class GameService {
     removeClient(client: Socket) {
         delete this.clients[client.id];
     }
+
+    sendMessageToClient(clientId: string, event: string, data: any) {
+        const client = this.clients[clientId];
+        if (client) {
+            client.emit(event, data);
+        }
+    }
+
+    broadcastMessage(event: string, data: any) {
+        Object.values(this.clients).forEach(client => {
+            client.emit(event, data);
+        });
+    }
+
+    getConnectedClients() {
+        return Object.keys(this.clients);
+    }
+
+    getClientCount() {
+        return Object.keys(this.clients).length;
+    }
 }
