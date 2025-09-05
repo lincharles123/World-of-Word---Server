@@ -7,7 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { RateLimiterService } from './rate-limiter.service';
 import { CooldownService } from './cooldown.service';
@@ -25,7 +25,7 @@ export class GameGateway
     private readonly gameService: GameService,
     private readonly rateLimiterService: RateLimiterService,
     private readonly cooldownService: CooldownService
-  ) {};
+  ) {}
 
   handleConnection(client: any, ...args: any[]) {
     const clientIP = this.getClientIP(client);
@@ -46,7 +46,7 @@ export class GameGateway
       return;
     }
 
-    this.gameService.addClient(client);
+    this.gameService.addMobileClient(client, client.id);
     this.logger.log(`Client id: ${client.id} connected from IP: ${clientIP}`);
     client.emit('welcome', {
       message: 'Connexion réussie au serveur de jeu',
@@ -91,7 +91,7 @@ export class GameGateway
 
   @AntiSpamProtection()
   @SubscribeMessage("instruction")
-  handleAction(client: any, data: any) {
+  handleAction(client: Socket, data: any) {
     this.logger.log(`Instruction received from client id: ${client.id}`);
     this.logger.debug(`Payload: ${JSON.stringify(data)}`);
     const response = {
@@ -108,7 +108,7 @@ export class GameGateway
 
   @AntiSpamProtection()
   @SubscribeMessage("testMessage")
-  handleTestMessage(client: any, data: any) {
+  handleTestMessage(client: Socket, data: any) {
     this.logger.log(`Test message received from client id: ${client.id}`);
     this.logger.debug(`Test payload: ${JSON.stringify(data)}`);
     
@@ -127,7 +127,7 @@ export class GameGateway
 
   @CooldownProtection()
   @SubscribeMessage("getStatus")
-  handleGetStatus(client: any, data: any) {
+  handleGetStatus(client: Socket, data: any) {
     this.logger.log(`Status request from client id: ${client.id}`);
     
     return {
@@ -143,7 +143,7 @@ export class GameGateway
 
   @CooldownProtection()
   @SubscribeMessage("quickMessage")
-  handleQuickMessage(client: any, data: any) {
+  handleQuickMessage(client: Socket, data: any) {
     this.logger.log(`Quick message from client id: ${client.id}`);
     
     client.emit('quickResponse', {
@@ -154,7 +154,7 @@ export class GameGateway
   }
 
   @SubscribeMessage("getCooldownStatus")
-  handleGetCooldownStatus(client: any, data: any) {
+  handleGetCooldownStatus(client: Socket, data: any) {
     const stats = this.cooldownService.getCooldownStats(client.id);
     
     client.emit('cooldownStatusResponse', {
