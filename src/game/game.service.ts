@@ -30,11 +30,12 @@ export class GameService {
             throw new Error('Max clients reached');
         if (username in this.clients)
             throw new Error(`Username: ${username} already taken`);
+
         this.clients[username] = client;
     }
 
     removeClient(client: Socket) : void {
-        delete this.clients[client.id];
+        delete this.clients[Object.keys(this.clients).find(key => this.clients[key] === client)];
     }
 
     setGameClient(client: Socket) : void {
