@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Param, Body, Delete } from '@nestjs/common';
-import { CooldownService } from '../game/cooldown/cooldown.service';
+import { CooldownService } from '../game/anti-spam/cooldown.service';
 
 @Controller('admin/cooldown')
 export class CooldownAdminController {

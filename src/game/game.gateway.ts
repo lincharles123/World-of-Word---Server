@@ -9,8 +9,8 @@ import {
 
 import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
-import { RateLimiterService } from './rate-limiter.service';
-import { CooldownService } from './cooldown/cooldown.service';
+import { RateLimiterService } from './anti-spam/rate-limiter.service';
+import { CooldownService } from './anti-spam/cooldown.service';
 import { AntiSpamProtection, CooldownProtection } from './anti-spam/anti-spam.decorator';
 
 @WebSocketGateway()

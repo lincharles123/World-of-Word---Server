@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Param, Body } from '@nestjs/common';
-import { RateLimiterService } from '../game/rate-limiter.service';
+import { RateLimiterService } from '../game/anti-spam/rate-limiter.service';
 
 @Controller('admin/rate-limit')
 export class RateLimitAdminController {
