@@ -10,8 +10,8 @@ import {
 import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { RateLimiterService } from './rate-limiter.service';
-import { CooldownService } from './cooldown.service';
-import { AntiSpamProtection, CooldownProtection } from './anti-spam.decorator';
+import { CooldownService } from './cooldown/cooldown.service';
+import { AntiSpamProtection, CooldownProtection } from './anti-spam/anti-spam.decorator';
 
 @WebSocketGateway()
 export class GameGateway
@@ -27,9 +27,11 @@ export class GameGateway
     private readonly cooldownService: CooldownService
   ) {}
 
-  handleConnection(client: any, ...args: any[]) {
+  @AntiSpamProtection()
+  handleConnection(client: Socket, ...args: any[]): void {
     const clientIP = this.getClientIP(client);
     const connectionCheck = this.rateLimiterService.canConnect(clientIP);
+    
     if (!connectionCheck.allowed) {
       this.logger.warn(
         `Connection rate limit exceeded for IP ${clientIP}. ` +
@@ -46,41 +48,48 @@ export class GameGateway
       return;
     }
 
-    this.gameService.addMobileClient(client, client.id);
     this.logger.log(`Client id: ${client.id} connected from IP: ${clientIP}`);
     client.emit('welcome', {
       message: 'Connexion réussie au serveur de jeu',
       clientId: client.id,
       timestamp: new Date().toISOString()
     });
-    this.gameService.broadcastMessage('playerJoined', {
-      message: `Un nouveau joueur s'est connecté`,
-      newPlayerId: client.id,
-      totalPlayers: this.gameService.getClientCount()
-    });
   }
 
-  handleDisconnect(client: any) {
-    this.gameService.removeClient(client);
-    this.logger.log(`Client id: ${client.id} disconnected`);
-    this.gameService.broadcastMessage('playerLeft', {
-      message: `Un joueur s'est déconnecté`,
-      leftPlayerId: client.id,
-      totalPlayers: this.gameService.getClientCount()
-    });
+  handleDisconnect(client: Socket): void {
+    if (this.gameService.getGameClients() === client) {
+      this.gameService.setGameClient(null);
+      this.logger.log(`Game client id: ${client.id} disconnected`);
+    } else {
+      this.gameService.removeClient(client);
+      this.logger.log(`Client id: ${client.id} disconnected`);
+      this.gameService.broadcastMessage('playerLeft', {
+        message: `Un joueur s'est déconnecté`,
+        leftPlayerId: client.id,
+        totalPlayers: this.gameService.getClientCount()
+      });
+    }
   }
 
-  private getClientIP(client: any): string {
+  private getClientIP(client: Socket): string {
     const forwarded = client.handshake?.headers['x-forwarded-for'];
     const real = client.handshake?.headers['x-real-ip'];
     const direct = client.handshake?.address;
     
     if (forwarded) {
-      return forwarded.split(',')[0].trim();
+      if (typeof forwarded === 'string') {
+        return forwarded.split(',')[0].trim();
+      } else if (Array.isArray(forwarded)) {
+        return forwarded[0].trim();
+      }
     }
     
     if (real) {
-      return real;
+      if (typeof real === 'string') {
+        return real;
+      } else if (Array.isArray(real)) {
+        return real[0].trim();
+      }
     }
     
     if (direct) {
@@ -89,21 +98,57 @@ export class GameGateway
     return client.conn?.remoteAddress || 'unknown';
   }
 
-  @AntiSpamProtection()
+  @SubscribeMessage("join")
+  onJoin(client: Socket, data: any): void {
+    if (data.role === 'game') {
+      this.gameService.setGameClient(client);
+      this.logger.log(`Game client id: ${client.id} joined`);
+      return;
+    }
+
+    try {
+      this.gameService.addMobileClient(client, data.username);
+      client.emit('join-success', '');
+      this.logger.log(`Mobile client id: ${client.id} joined as ${data.username}`);
+      
+      this.gameService.broadcastMessage('playerJoined', {
+        message: `Un nouveau joueur s'est connecté`,
+        newPlayerId: client.id,
+        totalPlayers: this.gameService.getClientCount()
+      });
+    } catch (e) {
+      this.logger.warn(`Mobile client id: ${client.id} failed to join: ${e.message}`);
+      client.emit('join-fail', e.message);
+      client.disconnect();
+    }
+  }
+  
+  @SubscribeMessage("init-game")
+  init(client: Socket, data: any): void {
+    this.gameService.init(data.effect_duration, data.effect_list);
+    this.logger.log(`Game initialized by client id: ${client.id}`);
+  }
+  
   @SubscribeMessage("instruction")
   handleAction(client: Socket, data: any) {
     this.logger.log(`Instruction received from client id: ${client.id}`);
     this.logger.debug(`Payload: ${JSON.stringify(data)}`);
-    const response = {
-      event: "instructionResponse",
-      data: {
-        message: `Instruction reçue et traitée`,
-        originalData: data,
-        timestamp: new Date().toISOString(),
-        processedBy: client.id
-      },
-    };
-    return response;
+
+    const { id, name } = data;
+
+    try {
+      this.gameService.addEffect(id, name);
+      this.logger.log(`Effect ${name} added`);
+      client.emit('apply-success', {});
+      this.gameService.getGameClients().emit('apply-effect', {
+        username: this.gameService.getUsernameByClient(client),
+        id: id,
+        type: name
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to add effect ${name} from client id: ${client.id}: ${e.message}`);
+      client.emit('apply-fail', e.message);
+    }
   }
 
   @AntiSpamProtection()

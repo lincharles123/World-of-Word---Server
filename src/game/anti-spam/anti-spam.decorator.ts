@@ -1,6 +1,6 @@
 import { UseGuards, applyDecorators } from '@nestjs/common';
-import { WebSocketRateLimitGuard } from './websocket-rate-limit.guard';
-import { CooldownGuard } from './cooldown.guard';
+import { WebSocketRateLimitGuard } from '../websocket-rate-limit.guard';
+import { CooldownGuard } from '../cooldown/cooldown.guard';
 
 export function AntiSpamProtection() {
   return applyDecorators(

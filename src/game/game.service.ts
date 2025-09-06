@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Game } from './interfaces/game.interface';
+import { GameElement } from './interfaces/game.interface';
 import { Socket } from 'socket.io';
-
-type Effect = {
-    type: string;
-    start: Date;
-}
 
 @Injectable()
 export class GameService {
-    private game: Record<string, Effect[]>;
+    private gameState: Record<string, GameElement>;
     private clients: Record<string, Socket> = {};
+    private readonly maxClients = 1;
     private gameClient: Socket;
     private effect_duration: number;
     private effect_list: string[];
@@ -20,25 +16,23 @@ export class GameService {
         this.effect_list = list.split(',');
     }
 
-    updateMap(element: JSON[]) {
-
+    updateGameState(element: JSON[]) {
+        element.forEach((el: any) => {
+            this.gameState[el.id] = {type: el.type, isInterractive: el.isInteractive, effects: []};
+        });
     }
 
-    addMobileClient(client: Socket, username: string) : boolean {
+    addMobileClient(client: Socket, username: string) {
+        if (Object.keys(this.clients).length === this.maxClients)
+            throw new Error('Max clients reached');
+        if (username in this.clients)
+            throw new Error(`Username: ${username} already taken`);
+
         this.clients[username] = client;
-        return true;
-    }
-
-    checkUsername(username: string) : boolean {
-        return username in this.clients;
-    }
-
-    checkMaxClients() : boolean {
-        return Object.keys(this.clients).length === 1;
     }
 
     removeClient(client: Socket) : void {
-        delete this.clients[client.id];
+        delete this.clients[Object.keys(this.clients).find(key => this.clients[key] === client)];
     }
 
     sendMessageToClient(clientId: string, event: string, data: any) {
@@ -74,10 +68,14 @@ export class GameService {
         return this.clients;
     }
 
-    addEffect(client: Socket, id: string, type: string) {
-        if (!(id in this.game))
-            this.game[id] = [{type: type, start: new Date()}];
-        else
-            this.game[id].push({type: type, start: new Date()});
+    getUsernameByClient(client: Socket) : string {
+        return Object.keys(this.clients).find(key => this.clients[key] === client);
+    }
+
+    addEffect(id: string, name: string) {
+        if (!this.effect_list.includes(name))
+            throw new Error(`Invalid word: ${name}`);
+
+        this.gameState[id].effects.push({type: name, start: new Date()});
     }
 }
