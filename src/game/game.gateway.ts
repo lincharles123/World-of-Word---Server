@@ -57,7 +57,7 @@ export class GameGateway
   init(client: Socket, data: any) : void {
     this.gameService.init(data.effect_duration, data.effect_list);
     this.logger.log(`Game initialized by client id: ${client.id}`);
-  } 
+  }
   
   @SubscribeMessage("instruction")
   handleInstruction(client: Socket, data: any) : void {
@@ -69,6 +69,7 @@ export class GameGateway
       this.gameService.addEffect(id, name);
       this.logger.log(`Effect ${name} added`);
       client.emit('apply-success', {});
+      this.gameService.getGameClients().emit('apply-effect', {username: this.gameService.getUsernameByClient(client), id: id, type: name});
     } catch (e) {
       this.logger.warn(`Failed to add effect ${name} from client id: ${client.id}: ${e.message}`);
       client.emit('apply-fail', e.message);

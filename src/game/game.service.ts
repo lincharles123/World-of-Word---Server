@@ -1,15 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Game } from './interfaces/game.interface';
+import { GameElement } from './interfaces/game.interface';
 import { Socket } from 'socket.io';
-
-type Effect = {
-    type: string;
-    start: Date;
-}
 
 @Injectable()
 export class GameService {
-    private game: Record<string, Effect[]>;
+    private gameState: Record<string, GameElement>;
     private clients: Record<string, Socket> = {};
     private readonly maxClients = 1;
     private gameClient: Socket;
@@ -21,8 +16,10 @@ export class GameService {
         this.effect_list = list.split(',');
     }
 
-    updateMap(element: JSON[]) {
-
+    updateGameState(element: JSON[]) {
+        element.forEach((el: any) => {
+            this.gameState[el.id] = {type: el.type, isInterractive: el.isInteractive, effects: []};
+        });
     }
 
     addMobileClient(client: Socket, username: string) {
@@ -50,13 +47,14 @@ export class GameService {
         return this.clients;
     }
 
+    getUsernameByClient(client: Socket) : string {
+        return Object.keys(this.clients).find(key => this.clients[key] === client);
+    }
+
     addEffect(id: string, name: string) {
         if (!this.effect_list.includes(name))
             throw new Error(`Invalid word: ${name}`);
 
-        if (!(id in this.game))
-            this.game[id] = [{type: name, start: new Date()}];
-        else
-            this.game[id].push({type: name, start: new Date()});
+        this.gameState[id].effects.push({type: name, start: new Date()});
     }
 }
