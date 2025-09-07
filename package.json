@@ -6,7 +6,8 @@
   "scripts": {
     "build": "nest build",
     "start:dev": "nest start --watch",
-    "start:prod": "node ."
+    "start:prod": "node .",
+    "format": "prettier --write ."
   },
   "repository": {
     "type": "git",
@@ -25,14 +26,19 @@
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/platform-socket.io": "^11.1.6",
+    "@nestjs/serve-static": "^5.0.3",
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/websockets": "^11.1.6",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "prettier": "^3.6.2",
     "reflect-metadata": "^0.2.2",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.7",
+    "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
     "typescript": "^5.9.2"
   }

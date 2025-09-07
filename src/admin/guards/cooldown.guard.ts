@@ -1,5 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext, Logger } from '@nestjs/common';
-import { CooldownService } from './cooldown.service';
+import { CooldownService } from '../services/cooldown.service';
 
 @Injectable()
 export class CooldownGuard implements CanActivate {
@@ -10,15 +10,15 @@ export class CooldownGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const client = context.switchToWs().getClient();
     const clientId = client.id;
-    
+
     const result = this.cooldownService.canSendMessage(clientId);
-    
+
     if (!result.allowed) {
       this.logger.debug(
         `Message blocked for client ${clientId}: ${result.reason}. ` +
-        `Remaining: ${result.remainingCooldown}s`
+          `Remaining: ${result.remainingCooldown}s`,
       );
-      
+
       if (result.violation) {
         client.emit('cooldownViolation', {
           error: 'Cooldown violation',
@@ -26,20 +26,20 @@ export class CooldownGuard implements CanActivate {
           remainingCooldown: result.remainingCooldown,
           cooldownDuration: 5,
           timestamp: new Date().toISOString(),
-          advice: 'Attendez avant d\'envoyer un autre message pour éviter les pénalités.'
+          advice: "Attendez avant d'envoyer un autre message pour éviter les pénalités.",
         });
       } else {
         client.emit('cooldownActive', {
           error: 'Cooldown active',
           reason: result.reason,
           remainingCooldown: result.remainingCooldown,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
-      
+
       return false;
     }
-    
+
     return true;
   }
 }

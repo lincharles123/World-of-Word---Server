@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Param, Body, Delete } from '@nestjs/common';
-import { CooldownService } from '../game/anti-spam/cooldown.service';
+import { CooldownService } from '../../services/cooldown.service';
 
 @Controller('admin/cooldown')
 export class CooldownAdminController {
@@ -10,7 +10,7 @@ export class CooldownAdminController {
     return {
       timestamp: new Date().toISOString(),
       cooldowns: this.cooldownService.getAllCooldownStats(),
-      metrics: this.cooldownService.getMetrics()
+      metrics: this.cooldownService.getMetrics(),
     };
   }
 
@@ -19,42 +19,39 @@ export class CooldownAdminController {
     return {
       clientId,
       timestamp: new Date().toISOString(),
-      stats: this.cooldownService.getCooldownStats(clientId)
+      stats: this.cooldownService.getCooldownStats(clientId),
     };
   }
 
   @Post('reset/:clientId')
   resetCooldown(@Param('clientId') clientId: string) {
     this.cooldownService.resetCooldown(clientId);
-    
+
     return {
       message: `Cooldown reset for client ${clientId}`,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Delete('all')
   resetAllCooldowns() {
     this.cooldownService.resetAllCooldowns();
-    
+
     return {
       message: 'All cooldowns have been reset',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Post('penalty/:clientId')
-  applyPenalty(
-    @Param('clientId') clientId: string,
-    @Body() body: { reason?: string }
-  ) {
+  applyPenalty(@Param('clientId') clientId: string, @Body() body: { reason?: string }) {
     const reason = body?.reason || 'Manual penalty applied by admin';
     this.cooldownService.applyPenalty(clientId, reason);
-    
+
     return {
       message: `Penalty applied to client ${clientId}`,
       reason,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -62,7 +59,7 @@ export class CooldownAdminController {
   getConfig() {
     return {
       timestamp: new Date().toISOString(),
-      config: this.cooldownService.getConfig()
+      config: this.cooldownService.getConfig(),
     };
   }
 
@@ -70,7 +67,7 @@ export class CooldownAdminController {
   getMetrics() {
     return {
       timestamp: new Date().toISOString(),
-      metrics: this.cooldownService.getMetrics()
+      metrics: this.cooldownService.getMetrics(),
     };
   }
 }

@@ -10,22 +10,22 @@ interface CooldownEntry {
 export class CooldownService {
   private readonly logger = new Logger(CooldownService.name);
   private readonly cooldowns = new Map<string, CooldownEntry>();
-  
+
   private readonly config = {
     cooldownDuration: 1000,
     maxViolations: 3,
     violationWindow: 30000,
     penaltyDuration: 60000,
-    cleanupInterval: 300000
+    cleanupInterval: 300000,
   };
 
   constructor() {
     setInterval(() => this.cleanupExpiredEntries(), this.config.cleanupInterval);
   }
 
-  canSendMessage(clientId: string): { 
-    allowed: boolean; 
-    remainingCooldown?: number; 
+  canSendMessage(clientId: string): {
+    allowed: boolean;
+    remainingCooldown?: number;
     reason?: string;
     violation?: boolean;
   } {
@@ -36,7 +36,7 @@ export class CooldownService {
       this.cooldowns.set(clientId, {
         lastMessageTime: now,
         messageCount: 1,
-        violations: 0
+        violations: 0,
       });
       return { allowed: true };
     }
@@ -46,12 +46,14 @@ export class CooldownService {
     if (timeSinceLastMessage < this.config.cooldownDuration) {
       entry.violations++;
       entry.messageCount++;
-      
-      const remainingCooldown = Math.ceil((this.config.cooldownDuration - timeSinceLastMessage) / 1000);
-      
+
+      const remainingCooldown = Math.ceil(
+        (this.config.cooldownDuration - timeSinceLastMessage) / 1000,
+      );
+
       this.logger.warn(
         `Client ${clientId} tried to send message during cooldown. ` +
-        `Remaining: ${remainingCooldown}s, Violations: ${entry.violations}`
+          `Remaining: ${remainingCooldown}s, Violations: ${entry.violations}`,
       );
 
       if (entry.violations >= this.config.maxViolations) {
@@ -59,7 +61,7 @@ export class CooldownService {
           allowed: false,
           remainingCooldown: Math.ceil(this.config.penaltyDuration / 1000),
           reason: `Trop de violations de cooldown. Pénalité appliquée.`,
-          violation: true
+          violation: true,
         };
       }
 
@@ -67,12 +69,12 @@ export class CooldownService {
         allowed: false,
         remainingCooldown,
         reason: `Cooldown actif. Attendez ${remainingCooldown} secondes.`,
-        violation: true
+        violation: true,
       };
     }
     entry.lastMessageTime = now;
     entry.messageCount++;
-    
+
     if (entry.violations > 0 && timeSinceLastMessage > this.config.violationWindow) {
       entry.violations = Math.max(0, entry.violations - 1);
     }
@@ -88,20 +90,20 @@ export class CooldownService {
     lastMessageTime?: Date;
   } {
     const entry = this.cooldowns.get(clientId);
-    
+
     if (!entry) {
       return {
         isOnCooldown: false,
         remainingCooldown: 0,
         messageCount: 0,
-        violations: 0
+        violations: 0,
       };
     }
 
     const now = Date.now();
     const timeSinceLastMessage = now - entry.lastMessageTime;
     const isOnCooldown = timeSinceLastMessage < this.config.cooldownDuration;
-    const remainingCooldown = isOnCooldown 
+    const remainingCooldown = isOnCooldown
       ? Math.ceil((this.config.cooldownDuration - timeSinceLastMessage) / 1000)
       : 0;
 
@@ -110,7 +112,7 @@ export class CooldownService {
       remainingCooldown,
       messageCount: entry.messageCount,
       violations: entry.violations,
-      lastMessageTime: new Date(entry.lastMessageTime)
+      lastMessageTime: new Date(entry.lastMessageTime),
     };
   }
 
@@ -128,23 +130,23 @@ export class CooldownService {
   getAllCooldownStats(): { [clientId: string]: any } {
     const stats: { [clientId: string]: any } = {};
     const now = Date.now();
-    
+
     for (const [clientId, entry] of this.cooldowns.entries()) {
       const timeSinceLastMessage = now - entry.lastMessageTime;
       const isOnCooldown = timeSinceLastMessage < this.config.cooldownDuration;
-      
+
       stats[clientId] = {
         isOnCooldown,
-        remainingCooldown: isOnCooldown 
+        remainingCooldown: isOnCooldown
           ? Math.ceil((this.config.cooldownDuration - timeSinceLastMessage) / 1000)
           : 0,
         messageCount: entry.messageCount,
         violations: entry.violations,
         lastMessageTime: new Date(entry.lastMessageTime).toISOString(),
-        timeSinceLastMessage: Math.ceil(timeSinceLastMessage / 1000)
+        timeSinceLastMessage: Math.ceil(timeSinceLastMessage / 1000),
       };
     }
-    
+
     return stats;
   }
 
@@ -157,7 +159,7 @@ export class CooldownService {
       violationWindowSeconds: this.config.violationWindow / 1000,
       penaltyDuration: this.config.penaltyDuration,
       penaltyDurationSeconds: this.config.penaltyDuration / 1000,
-      description: 'Anti-spam cooldown: 5 seconds between messages'
+      description: 'Anti-spam cooldown: 5 seconds between messages',
     };
   }
 
@@ -166,14 +168,14 @@ export class CooldownService {
     const entry = this.cooldowns.get(clientId) || {
       lastMessageTime: 0,
       messageCount: 0,
-      violations: 0
+      violations: 0,
     };
-    
+
     entry.violations = this.config.maxViolations;
     entry.lastMessageTime = now + this.config.penaltyDuration;
-    
+
     this.cooldowns.set(clientId, entry);
-    
+
     this.logger.warn(`Penalty applied to client ${clientId}: ${reason}`);
   }
 
@@ -181,15 +183,15 @@ export class CooldownService {
     const now = Date.now();
     const expiredThreshold = 24 * 60 * 60 * 1000;
     const keysToDelete: string[] = [];
-    
+
     for (const [clientId, entry] of this.cooldowns.entries()) {
       if (now - entry.lastMessageTime > expiredThreshold || entry.lastMessageTime > now + 60000) {
         keysToDelete.push(clientId);
       }
     }
-    
-    keysToDelete.forEach(key => this.cooldowns.delete(key));
-    
+
+    keysToDelete.forEach((key) => this.cooldowns.delete(key));
+
     if (keysToDelete.length > 0) {
       this.logger.debug(`Cleaned up ${keysToDelete.length} expired cooldown entries`);
     }
@@ -206,29 +208,30 @@ export class CooldownService {
     let activeClients = 0;
     let clientsOnCooldown = 0;
     let totalViolations = 0;
-    
+
     for (const [clientId, entry] of this.cooldowns.entries()) {
       const timeSinceLastMessage = now - entry.lastMessageTime;
-      
+
       if (timeSinceLastMessage < 300000) {
         activeClients++;
       }
-      
+
       if (timeSinceLastMessage < this.config.cooldownDuration) {
         clientsOnCooldown++;
       }
-      
+
       totalViolations += entry.violations;
     }
-    
+
     return {
       totalClients: this.cooldowns.size,
       activeClients,
       clientsOnCooldown,
       totalViolations,
-      averageViolationsPerClient: this.cooldowns.size > 0 
-        ? Math.round((totalViolations / this.cooldowns.size) * 100) / 100 
-        : 0
+      averageViolationsPerClient:
+        this.cooldowns.size > 0
+          ? Math.round((totalViolations / this.cooldowns.size) * 100) / 100
+          : 0,
     };
   }
 }
