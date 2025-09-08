@@ -3,6 +3,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { WsGateway } from './ws.gateway';
 import { LobbiesModule } from './lobbies/lobbies.module';
+import { GamesModule } from './games/games.module';
 import { AdminModule } from './admin/admin.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { AdminModule } from './admin/admin.module';
     }),
     LobbiesModule,
     AdminModule,
+    GamesModule,
   ],
   providers: [WsGateway],
 })
