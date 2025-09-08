@@ -1,5 +1,5 @@
-import { IsEnum, IsString } from 'class-validator';
-import { LobbyState } from '../enums/lobby-state.enum';
+import { IsString } from 'class-validator';
+import { MobilePlayer } from '../types';
 
 export class LobbyJoinSuccessDto {
   @IsString()
@@ -10,4 +10,7 @@ export class LobbyJoinSuccessDto {
 
   @IsString()
   socketId: string;
+
+  @IsString()
+  players: MobilePlayer[];
 }

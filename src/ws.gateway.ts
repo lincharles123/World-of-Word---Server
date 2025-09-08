@@ -99,15 +99,22 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.join(`room:${lobby.roomId}`);
       client.join(`room:${lobby.roomId}:mobiles`);
 
-      const payload: LobbyJoinSuccessDto | LobbyPlayerJoined = {
+      const joinSuccessPayload: LobbyJoinSuccessDto = {
+        roomId: lobby.roomId,
+        username: player.username,
+        socketId: player.socketId,
+        players: lobby.players,
+      };
+
+      this.server.to(client.id).emit(WsGateway.EV.LOBBY_JOIN_SUCCESS, joinSuccessPayload);
+
+      const playerJoinedPayload: LobbyPlayerJoined = {
         roomId: lobby.roomId,
         username: player.username,
         socketId: player.socketId,
       };
 
-      this.server.to(client.id).emit(WsGateway.EV.LOBBY_JOIN_SUCCESS, payload);
-
-      client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, payload);
+      client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, playerJoinedPayload);
     } else {
       console.log(`❌ Tentative de rejoindre un lobby inconnu avec le token: ${dto.token}`);
       client.emit('lobby:join-error', { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
