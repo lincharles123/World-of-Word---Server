@@ -1,4 +1,5 @@
-import { IsString } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
+import { LobbyState } from '../enums/lobby-state.enum';
 
 export class LobbyJoinSuccessDto {
   @IsString()

@@ -19,6 +19,7 @@ import { LobbiesService } from './lobbies/lobbies.service';
 import { CooldownService } from './admin/services/cooldown.service';
 import { RateLimiterService } from './admin/services/rate-limiter.service';
 import { ConnectionTrackerService } from './admin/services/connection-tracker.service';
+import { LobbyState } from './lobbies/enums/lobby-state.enum';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -36,12 +37,12 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     LOBBY_CREATED: 'lobby:created',
     LOBBY_JOIN: 'lobby:join',
     LOBBY_JOIN_SUCCESS: 'lobby:join-success',
-    LOBBY_PLAYER_JOINED: 'lobby:player-joined'
+    LOBBY_PLAYER_JOINED: 'lobby:player-joined',
   } as const;
 
   handleConnection(client: Socket) {
     console.log(`🔌 Nouveau client connecté: ${client.id}`);
-    
+
     const ip = this.getClientIP(client);
     const userAgent = client.handshake.headers['user-agent'];
     this.connectionTracker.addClient(client.id, ip, userAgent);
@@ -61,6 +62,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onCreate(@MessageBody() dto: LobbyCreateDto, @ConnectedSocket() client: Socket) {
     const lobby = this.lobbies.create(dto.wsUrl, client.id, dto.maxPlayers);
 
+    client.data.roomId = lobby.roomId;
+    console.log(client.data.roomId);
     client.join(`room:${lobby.roomId}`);
 
     const payload: LobbyCreatedDto = {
@@ -79,10 +82,18 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(WsGateway.EV.LOBBY_JOIN)
   onJoin(@MessageBody() dto: LobbyJoinDto, @ConnectedSocket() client: Socket) {
-    console.log(dto.token)
+    console.log(dto.token);
     const lobby = this.lobbies.findByToken(dto.token);
-
     if (lobby) {
+      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+        console.log(`❌ Tentative de rejoindre un lobby non disponible: ${lobby.roomId}`);
+        client.emit('lobby:join-error', {
+          message: 'Lobby already started or finished',
+          code: 'LOBBY_NOT_PENDING',
+        });
+        return;
+      }
+
       const player = this.lobbies.addMobile(lobby, dto.username, client.id);
 
       client.join(`room:${lobby.roomId}`);
@@ -98,11 +109,12 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, payload);
     } else {
-      client.emit('error', { message: 'Lobby not found' });
+      console.log(`❌ Tentative de rejoindre un lobby inconnu avec le token: ${dto.token}`);
+      client.emit('lobby:join-error', { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
     }
   }
 
-  "--------------------------[ SECURITY ]--------------------------"
+  '--------------------------[ SECURITY ]--------------------------';
 
   handleMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
     const cooldownCheck = this.cooldownService.canSendMessage(client.id);
@@ -111,54 +123,57 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: 'Cooldown violation',
         reason: cooldownCheck.reason,
         remainingCooldown: cooldownCheck.remainingCooldown,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return;
     }
   }
 
-  handleSpam(@MessageBody() data: any, @ConnectedSocket() client: Socket) {    
+  handleSpam(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
     const cooldownCheck = this.cooldownService.canSendMessage(client.id);
-    const rateLimitCheck = this.rateLimiterService.canSendMessage(client.id, this.getClientIP(client));
-    
+    const rateLimitCheck = this.rateLimiterService.canSendMessage(
+      client.id,
+      this.getClientIP(client),
+    );
+
     if (!cooldownCheck.allowed) {
       client.emit('cooldownViolation', {
         error: 'Cooldown violation',
         reason: cooldownCheck.reason,
         remainingCooldown: cooldownCheck.remainingCooldown,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return;
     }
-    
+
     if (!rateLimitCheck.allowed) {
       client.emit('rateLimitExceeded', {
         error: 'Rate limit exceeded',
         reason: rateLimitCheck.reason,
         retryAfter: rateLimitCheck.retryAfter,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return;
     }
   }
-  
+
   private getClientIP(client: Socket): string {
     const forwarded = client.handshake?.headers['x-forwarded-for'];
     const real = client.handshake?.headers['x-real-ip'];
     const direct = client.handshake?.address;
-    
+
     if (forwarded) {
       return Array.isArray(forwarded) ? forwarded[0].trim() : forwarded.split(',')[0].trim();
     }
-    
+
     if (real) {
       return Array.isArray(real) ? real[0].trim() : real;
     }
-    
+
     if (direct) {
       return direct;
     }
-    
+
     return client.conn?.remoteAddress || 'unknown';
   }
 }

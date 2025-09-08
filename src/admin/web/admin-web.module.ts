@@ -6,10 +6,6 @@ import { AdminServicesModule } from '../services/admin-services.module';
 
 @Module({
   imports: [AdminServicesModule],
-  controllers: [
-    CooldownAdminController, 
-    RateLimitAdminController, 
-    ConnectionAdminController
-  ],
+  controllers: [CooldownAdminController, RateLimitAdminController, ConnectionAdminController],
 })
 export class AdminWebModule {}

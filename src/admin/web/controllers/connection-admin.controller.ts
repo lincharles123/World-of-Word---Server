@@ -27,7 +27,7 @@ export class ConnectionAdminController {
     return {
       timestamp: new Date().toISOString(),
       totalConnected: stats.totalConnected,
-      connections: stats.connections.map(conn => ({
+      connections: stats.connections.map((conn) => ({
         id: conn.id,
         ip: conn.ip,
         connectedSince: conn.connectedSince,

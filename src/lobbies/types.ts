@@ -1,3 +1,5 @@
+import { LobbyState } from './enums/lobby-state.enum';
+
 export type MobilePlayer = {
   username: string;
   socketId: string;
@@ -10,4 +12,5 @@ export type Lobby = {
   hostSocketId: string;
   maxPlayers: number;
   players: MobilePlayer[];
+  state: LobbyState;
 };

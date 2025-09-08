@@ -1,5 +1,6 @@
-import { IsString, ValidateNested, IsInt } from 'class-validator';
+import { IsString, ValidateNested, IsInt, isEnum, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { LobbyState } from '../enums/lobby-state.enum';
 
 export class QrPayloadDto {
   @IsInt()
