@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World of Word - Admin Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .stat-card h4 {
+            margin: 0 0 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .stat-card div {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .output {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            background: #fff;
+            border-bottom-color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online {
+            background-color: #28a745;
+        }
+        .status-offline {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 World of Word - Admin Dashboard</h1>
+            <p>Interface d'administration pour la gestion des cooldowns, rate limits et connexions</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('cooldown')">Cooldown Management</button>
+            <button class="tab" onclick="showTab('ratelimit')">Rate Limit Management</button>
+            <button class="tab" onclick="showTab('connections')">Live Connections</button>
+            <button class="tab" onclick="showTab('realtime')">Real-time Monitor</button>
+        </div>
+
+        <!-- Cooldown Tab -->
+        <div id="cooldown" class="tab-content active">
+            <div class="section">
+                <h2>📊 Cooldown Statistics</h2>
+                <button class="btn" onclick="getCooldownStats()">Refresh Stats</button>
+                <button class="btn" onclick="getCooldownMetrics()">Get Metrics</button>
+                <button class="btn" onclick="getCooldownConfig()">View Config</button>
+                <button class="btn btn-danger" onclick="resetAllCooldowns()">Reset All</button>
+                
+                <div id="cooldownStats" class="stats"></div>
+                <div id="cooldownOutput" class="output"></div>
+            </div>
+
+            <div class="section">
+                <h3>🎯 Client Actions</h3>
+                <input type="text" id="clientId" placeholder="Client ID">
+                <button class="btn" onclick="getClientStats()">Get Client Stats</button>
+                <button class="btn btn-warning" onclick="resetClientCooldown()">Reset Client</button>
+                <button class="btn btn-danger" onclick="applyPenalty()">Apply Penalty</button>
+            </div>
+        </div>
+
+        <!-- Rate Limit Tab -->
+        <div id="ratelimit" class="tab-content">
+            <div class="section">
+                <h2>⚡ Rate Limit Management</h2>
+                <button class="btn" onclick="getRateLimitStats()">Get All Stats</button>
+                <button class="btn" onclick="getRateLimitConfig()">View Config</button>
+                
+                <div id="rateLimitOutput" class="output"></div>
+            </div>
+
+            <div class="section">
+                <h3>🔧 Rate Limit Actions</h3>
+                <input type="text" id="identifier" placeholder="Client ID or IP">
+                <select id="limitType">
+                    <option value="message">Message</option>
+                    <option value="connection">Connection</option>
+                    <option value="global">Global</option>
+                </select>
+                <button class="btn" onclick="getIdentifierStats()">Get Stats</button>
+                <button class="btn btn-warning" onclick="resetLimits()">Reset Limits</button>
+            </div>
+        </div>
+
+        <!-- Live Connections Tab -->
+        <div id="connections" class="tab-content">
+            <div class="section">
+                <h2>🌐 Live Connections</h2>
+                <button class="btn" onclick="getConnectionStats()">Refresh Connections</button>
+                <button class="btn" onclick="getConnectionMetrics()">Get Metrics</button>
+                <button class="btn btn-success" id="liveMonitorBtn" onclick="toggleLiveMonitor()">Start Live Monitor</button>
+                <button class="btn" onclick="clearConnectionOutput()">Clear</button>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h4>Total Connected</h4>
+                        <div id="totalConnectedClients">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Active Clients</h4>
+                        <div id="activeConnectionClients">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Inactive Clients</h4>
+                        <div id="inactiveClients">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Avg Connection Time</h4>
+                        <div id="avgConnectionTime">-</div>
+                    </div>
+                </div>
+                
+                <div id="connectionOutput" class="output"></div>
+            </div>
+        </div>
+
+        <!-- Real-time Monitor Tab -->
+        <div id="realtime" class="tab-content">
+            <div class="section">
+                <h2>📡 Real-time Monitor</h2>
+                <button class="btn" id="monitorBtn" onclick="toggleMonitor()">Start Monitoring</button>
+                <button class="btn" onclick="clearMonitor()">Clear</button>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h4>Total Clients</h4>
+                        <div id="totalClients">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Active Clients</h4>
+                        <div id="activeClients">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Clients on Cooldown</h4>
+                        <div id="clientsOnCooldown">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Total Violations</h4>
+                        <div id="totalViolations">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Rate Limits Active</h4>
+                        <div id="rateLimitsActive">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Last Update</h4>
+                        <div id="lastUpdate">-</div>
+                    </div>
+                </div>
+                
+                <div id="realtimeOutput" class="output"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3002';
+        let monitorInterval = null;
+        let liveMonitorInterval = null;
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function log(message, outputId = 'cooldownOutput') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const data = await response.json();
+                return { success: true, data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Cooldown Functions
+        async function getCooldownStats() {
+            const result = await apiCall('/admin/cooldown/stats');
+            if (result.success) {
+                displayCooldownStats(result.data);
+                log('✅ Cooldown stats loaded');
+            } else {
+                log('❌ Error loading cooldown stats: ' + result.error);
+            }
+        }
+
+        function displayCooldownStats(data) {
+            const statsDiv = document.getElementById('cooldownStats');
+            const metrics = data.metrics;
+            
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <h4>Total Clients</h4>
+                    <div>${metrics.totalClients}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Active Clients</h4>
+                    <div>${metrics.activeClients}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Clients on Cooldown</h4>
+                    <div>${metrics.clientsOnCooldown}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Total Violations</h4>
+                    <div>${metrics.totalViolations}</div>
+                </div>
+            `;
+
+            log(JSON.stringify(data, null, 2));
+        }
+
+        async function getCooldownMetrics() {
+            const result = await apiCall('/admin/cooldown/metrics');
+            if (result.success) {
+                log('📊 Metrics:\n' + JSON.stringify(result.data, null, 2));
+            } else {
+                log('❌ Error loading metrics: ' + result.error);
+            }
+        }
+
+        async function getCooldownConfig() {
+            const result = await apiCall('/admin/cooldown/config');
+            if (result.success) {
+                log('⚙️ Config:\n' + JSON.stringify(result.data, null, 2));
+            } else {
+                log('❌ Error loading config: ' + result.error);
+            }
+        }
+
+        async function resetAllCooldowns() {
+            if (confirm('Are you sure you want to reset ALL cooldowns?')) {
+                const result = await apiCall('/admin/cooldown/all', 'DELETE');
+                if (result.success) {
+                    log('🗑️ All cooldowns reset: ' + result.data.message);
+                    getCooldownStats(); // Refresh stats
+                } else {
+                    log('❌ Error resetting cooldowns: ' + result.error);
+                }
+            }
+        }
+
+        async function getClientStats() {
+            const clientId = document.getElementById('clientId').value;
+            if (!clientId) {
+                log('❌ Please enter a client ID');
+                return;
+            }
+
+            const result = await apiCall(`/admin/cooldown/stats/${clientId}`);
+            if (result.success) {
+                log(`📱 Client ${clientId} stats:\n` + JSON.stringify(result.data, null, 2));
+            } else {
+                log('❌ Error loading client stats: ' + result.error);
+            }
+        }
+
+        async function resetClientCooldown() {
+            const clientId = document.getElementById('clientId').value;
+            if (!clientId) {
+                log('❌ Please enter a client ID');
+                return;
+            }
+
+            const result = await apiCall(`/admin/cooldown/reset/${clientId}`, 'POST');
+            if (result.success) {
+                log(`🔄 Client ${clientId} cooldown reset: ` + result.data.message);
+                getCooldownStats(); // Refresh stats
+            } else {
+                log('❌ Error resetting client cooldown: ' + result.error);
+            }
+        }
+
+        async function applyPenalty() {
+            const clientId = document.getElementById('clientId').value;
+            if (!clientId) {
+                log('❌ Please enter a client ID');
+                return;
+            }
+
+            const reason = prompt('Reason for penalty:', 'Admin penalty');
+            if (reason === null) return;
+
+            const result = await apiCall(`/admin/cooldown/penalty/${clientId}`, 'POST', { reason });
+            if (result.success) {
+                log(`⚠️ Penalty applied to ${clientId}: ` + result.data.message);
+                getCooldownStats(); // Refresh stats
+            } else {
+                log('❌ Error applying penalty: ' + result.error);
+            }
+        }
+
+        // Rate Limit Functions
+        async function getRateLimitStats() {
+            const result = await apiCall('/admin/rate-limit/stats');
+            if (result.success) {
+                log(JSON.stringify(result.data, null, 2), 'rateLimitOutput');
+            } else {
+                log('❌ Error loading rate limit stats: ' + result.error, 'rateLimitOutput');
+            }
+        }
+
+        async function getRateLimitConfig() {
+            const result = await apiCall('/admin/rate-limit/config');
+            if (result.success) {
+                log('⚙️ Rate Limit Config:\n' + JSON.stringify(result.data, null, 2), 'rateLimitOutput');
+            } else {
+                log('❌ Error loading rate limit config: ' + result.error, 'rateLimitOutput');
+            }
+        }
+
+        async function getIdentifierStats() {
+            const identifier = document.getElementById('identifier').value;
+            const type = document.getElementById('limitType').value;
+            
+            if (!identifier) {
+                log('❌ Please enter an identifier', 'rateLimitOutput');
+                return;
+            }
+
+            const result = await apiCall(`/admin/rate-limit/stats/${identifier}/${type}`);
+            if (result.success) {
+                log(`📊 ${identifier} (${type}) stats:\n` + JSON.stringify(result.data, null, 2), 'rateLimitOutput');
+            } else {
+                log('❌ Error loading identifier stats: ' + result.error, 'rateLimitOutput');
+            }
+        }
+
+        async function resetLimits() {
+            const identifier = document.getElementById('identifier').value;
+            const type = document.getElementById('limitType').value;
+            
+            if (!identifier) {
+                log('❌ Please enter an identifier', 'rateLimitOutput');
+                return;
+            }
+
+            const result = await apiCall(`/admin/rate-limit/reset/${identifier}`, 'POST', { type });
+            if (result.success) {
+                log(`🔄 Limits reset for ${identifier}: ` + result.data.message, 'rateLimitOutput');
+                getRateLimitStats(); // Refresh stats
+            } else {
+                log('❌ Error resetting limits: ' + result.error, 'rateLimitOutput');
+            }
+        }
+
+        // Connection Functions
+        async function getConnectionStats() {
+            const result = await apiCall('/admin/connections/stats');
+            if (result.success) {
+                displayConnectionStats(result.data);
+                log('✅ Connection stats loaded', 'connectionOutput');
+            } else {
+                log('❌ Error loading connection stats: ' + result.error, 'connectionOutput');
+            }
+        }
+
+        function displayConnectionStats(data) {
+            document.getElementById('totalConnectedClients').textContent = data.totalConnected;
+            
+            const output = document.getElementById('connectionOutput');
+            output.textContent = `=== Live Connections (${data.timestamp}) ===\n`;
+            output.textContent += `Total Connected: ${data.totalConnected}\n\n`;
+            
+            if (data.connections.length > 0) {
+                output.textContent += `=== Individual Connections ===\n`;
+                data.connections.forEach(conn => {
+                    const status = conn.lastActivityAgo < 30 ? '🟢 Active' : '🔴 Inactive';
+                    output.textContent += `${status} ${conn.id.substring(0, 8)}...\n`;
+                    output.textContent += `  - IP: ${conn.ip}\n`;
+                    output.textContent += `  - Connected: ${conn.connectedSince}s ago\n`;
+                    output.textContent += `  - Last Activity: ${conn.lastActivityAgo}s ago\n`;
+                    output.textContent += `  - User Agent: ${conn.userAgent ? conn.userAgent.substring(0, 50) + '...' : 'Unknown'}\n\n`;
+                });
+            } else {
+                output.textContent += 'Aucune connexion active\n';
+            }
+        }
+
+        async function getConnectionMetrics() {
+            const result = await apiCall('/admin/connections/metrics');
+            if (result.success) {
+                const metrics = result.data.metrics;
+                document.getElementById('totalConnectedClients').textContent = metrics.totalConnected;
+                document.getElementById('activeConnectionClients').textContent = metrics.activeClients;
+                document.getElementById('inactiveClients').textContent = metrics.inactiveClients;
+                document.getElementById('avgConnectionTime').textContent = metrics.averageConnectionTime + 's';
+                
+                log('📊 Connection Metrics:\n' + JSON.stringify(metrics, null, 2), 'connectionOutput');
+            } else {
+                log('❌ Error loading connection metrics: ' + result.error, 'connectionOutput');
+            }
+        }
+
+        function toggleLiveMonitor() {
+            const btn = document.getElementById('liveMonitorBtn');
+            
+            if (liveMonitorInterval) {
+                clearInterval(liveMonitorInterval);
+                liveMonitorInterval = null;
+                btn.textContent = 'Start Live Monitor';
+                btn.className = 'btn btn-success';
+                log('🔴 Live monitoring stopped', 'connectionOutput');
+            } else {
+                liveMonitorInterval = setInterval(updateLiveConnections, 1000); // Chaque seconde
+                btn.textContent = 'Stop Live Monitor';
+                btn.className = 'btn btn-danger';
+                log('🟢 Live monitoring started - Updates every second', 'connectionOutput');
+                updateLiveConnections();
+            }
+        }
+
+        async function updateLiveConnections() {
+            try {
+                const result = await apiCall('/admin/connections/live');
+                if (result.success) {
+                    displayLiveConnections(result.data);
+                }
+            } catch (error) {
+                console.error('Error updating live connections:', error);
+            }
+        }
+
+        function displayLiveConnections(data) {
+            document.getElementById('totalConnectedClients').textContent = data.totalConnected;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+            
+            const output = document.getElementById('connectionOutput');
+            output.textContent = `=== Live Monitor (${new Date().toLocaleTimeString()}) ===\n`;
+            output.textContent += `Total Connected: ${data.totalConnected}\n\n`;
+            
+            if (data.connections.length > 0) {
+                data.connections.forEach(conn => {
+                    const status = conn.isActive ? '🟢' : '🔴';
+                    const activity = conn.isActive ? 'Active' : `Idle ${conn.lastActivityAgo}s`;
+                    output.textContent += `${status} ${conn.id.substring(0, 8)}... (${conn.ip}) - ${activity}\n`;
+                });
+            } else {
+                output.textContent += 'Aucune connexion active\n';
+            }
+            
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearConnectionOutput() {
+            document.getElementById('connectionOutput').textContent = '';
+            log('🧹 Connection output cleared', 'connectionOutput');
+        }
+
+        // Real-time Monitor
+        function toggleMonitor() {
+            const btn = document.getElementById('monitorBtn');
+            
+            if (monitorInterval) {
+                clearInterval(monitorInterval);
+                monitorInterval = null;
+                btn.textContent = 'Start Monitoring';
+                btn.className = 'btn';
+                log('🔴 Monitoring stopped', 'realtimeOutput');
+            } else {
+                monitorInterval = setInterval(updateMonitor, 2000);
+                btn.textContent = 'Stop Monitoring';
+                btn.className = 'btn btn-danger';
+                log('🟢 Monitoring started - Updates every 2 seconds', 'realtimeOutput');
+                updateMonitor(); // Immediate first update
+            }
+        }
+
+        async function updateMonitor() {
+            try {
+                const cooldownResult = await apiCall('/admin/cooldown/stats');
+                const rateLimitResult = await apiCall('/admin/rate-limit/stats');
+                const connectionResult = await apiCall('/admin/connections/metrics');
+                
+                if (cooldownResult.success) {
+                    const metrics = cooldownResult.data.metrics;
+                    
+                    // Update real-time stats cards
+                    document.getElementById('totalClients').textContent = metrics.totalClients;
+                    document.getElementById('activeClients').textContent = metrics.activeClients;
+                    document.getElementById('clientsOnCooldown').textContent = metrics.clientsOnCooldown;
+                    document.getElementById('totalViolations').textContent = metrics.totalViolations;
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                    
+                    // Update output with detailed data
+                    const output = document.getElementById('realtimeOutput');
+                    output.textContent = `=== Real-time Monitor (${new Date().toLocaleTimeString()}) ===\n\n`;
+                    
+                    // Connection data
+                    if (connectionResult.success) {
+                        const connMetrics = connectionResult.data.metrics;
+                        output.textContent += `=== Connection Data ===\n`;
+                        output.textContent += `Total Connected: ${connMetrics.totalConnected}\n`;
+                        output.textContent += `Active Clients: ${connMetrics.activeClients}\n`;
+                        output.textContent += `Inactive Clients: ${connMetrics.inactiveClients}\n`;
+                        output.textContent += `Avg Connection Time: ${connMetrics.averageConnectionTime}s\n\n`;
+                    }
+                    
+                    // Cooldown data
+                    output.textContent += `=== Cooldown Data ===\n`;
+                    output.textContent += `Total Clients: ${metrics.totalClients}\n`;
+                    output.textContent += `Active Clients: ${metrics.activeClients}\n`;
+                    output.textContent += `Clients on Cooldown: ${metrics.clientsOnCooldown}\n`;
+                    output.textContent += `Total Violations: ${metrics.totalViolations}\n`;
+                    output.textContent += `Avg Violations per Client: ${metrics.averageViolationsPerClient}\n\n`;
+                    
+                    // Show individual client data if any
+                    const cooldowns = cooldownResult.data.cooldowns;
+                    const clientCount = Object.keys(cooldowns).length;
+                    if (clientCount > 0) {
+                        output.textContent += `=== Individual Client Data ===\n`;
+                        for (const [clientId, data] of Object.entries(cooldowns)) {
+                            output.textContent += `Client ${clientId.substring(0, 8)}...:\n`;
+                            output.textContent += `  - Messages: ${data.messageCount}\n`;
+                            output.textContent += `  - Violations: ${data.violations}\n`;
+                            output.textContent += `  - On Cooldown: ${data.isOnCooldown}\n`;
+                            if (data.isOnCooldown) {
+                                output.textContent += `  - Remaining: ${data.remainingCooldown}s\n`;
+                            }
+                            output.textContent += `  - Last Message: ${data.timeSinceLastMessage}s ago\n\n`;
+                        }
+                    }
+                }
+
+                if (rateLimitResult.success) {
+                    const rateLimitStats = rateLimitResult.data.stats;
+                    const rateLimitCount = Object.keys(rateLimitStats).length;
+                    document.getElementById('rateLimitsActive').textContent = rateLimitCount;
+                    
+                    if (rateLimitCount > 0) {
+                        const output = document.getElementById('realtimeOutput');
+                        output.textContent += `=== Rate Limit Data ===\n`;
+                        for (const [key, data] of Object.entries(rateLimitStats)) {
+                            output.textContent += `${key}:\n`;
+                            output.textContent += `  - Count: ${data.count}\n`;
+                            output.textContent += `  - Blocked: ${data.blocked}\n`;
+                            output.textContent += `  - Remaining Time: ${data.remainingTime}s\n\n`;
+                        }
+                    }
+                }
+
+                // Auto-scroll to bottom
+                const output = document.getElementById('realtimeOutput');
+                output.scrollTop = output.scrollHeight;
+
+            } catch (error) {
+                log('❌ Error updating monitor: ' + error.message, 'realtimeOutput');
+            }
+        }
+
+        function clearMonitor() {
+            document.getElementById('realtimeOutput').textContent = '';
+            log('🧹 Monitor cleared', 'realtimeOutput');
+        }
+
+        // Auto-load initial data
+        window.addEventListener('load', () => {
+            getCooldownConfig();
+            getCooldownStats();
+            getRateLimitConfig();
+            getConnectionMetrics();
+        });
+    </script>
+</body>
+</html>

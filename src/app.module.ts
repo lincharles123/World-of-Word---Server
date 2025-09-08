@@ -1,11 +1,19 @@
 import { Module } from '@nestjs/common';
-import { GameGateway } from './game/game.gateway';
-import { GameService } from './game/game.service';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { WsGateway } from './ws.gateway';
+import { LobbiesModule } from './lobbies/lobbies.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
-  providers: [
-    GameGateway,
-    GameService
-  ]
+  imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public'),
+      serveRoot: '/',
+    }),
+    LobbiesModule, 
+    AdminModule
+  ],
+  providers: [WsGateway],
 })
 export class AppModule {}
