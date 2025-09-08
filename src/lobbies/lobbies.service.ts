@@ -58,7 +58,8 @@ export class LobbiesService {
 
   getMobilesInLobby(roomId: string): MobilePlayer[] {
     const lobby = this.lobbies.get(roomId);
-    return lobby.players;
+    console.log(lobby.players);
+    return lobby.players ;
   }
 
   start(roomId: string): void {

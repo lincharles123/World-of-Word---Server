@@ -71,7 +71,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.create(dto.wsUrl, client.id, dto.maxPlayers);
 
     client.data.roomId = lobby.roomId;
-    console.log(client.data.roomId);
+    console.log(`Lobby ID: ${client.data.roomId}`);
     client.join(`room:${lobby.roomId}`);
 
     const payload: LobbyCreatedDto = {
@@ -103,7 +103,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const player = this.lobbies.addMobile(lobby, dto.username, client.id);
-
+      client.data.roomId = lobby.roomId;
+      console.log(`TESTTESTTESTTESTTESTTESTTEST Lobby ID: ${client.data.roomId}`);
       client.join(`room:${lobby.roomId}`);
       client.join(`room:${lobby.roomId}:mobiles`);
 
@@ -124,7 +125,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(WsGateway.EV.GAME_START)
   onGameStart(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    const roomId = client.data.roomId;
+    console.log(`TEST1 ${client}`);
+    console.log(`TEST2 ${client.data}`);
+    console.log(`TEST3 ${client.data.roomId}`);
+    const roomId = client.data;
     const lobby = this.lobbies.findByRoomId(roomId);
     if (lobby) {
       if (lobby.state && lobby.state !== LobbyState.PENDING) {
