@@ -128,7 +128,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`TEST1 ${client}`);
     console.log(`TEST2 ${client.data}`);
     console.log(`TEST3 ${client.data.roomId}`);
-    const roomId = client.data;
+    const roomId = client.data.roomId;
     const lobby = this.lobbies.findByRoomId(roomId);
     if (lobby) {
       if (lobby.state && lobby.state !== LobbyState.PENDING) {
