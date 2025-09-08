@@ -11,8 +11,8 @@ import { AdminModule } from './admin/admin.module';
       rootPath: join(process.cwd(), 'public'),
       serveRoot: '/',
     }),
-    LobbiesModule, 
-    AdminModule
+    LobbiesModule,
+    AdminModule,
   ],
   providers: [WsGateway],
 })

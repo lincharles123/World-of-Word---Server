@@ -32,7 +32,9 @@ export class ConnectionTrackerService {
     if (client) {
       this.connectedClients.delete(clientId);
       const connectionDuration = Date.now() - client.connectedAt;
-      this.logger.log(`Client déconnecté: ${clientId} (durée: ${Math.round(connectionDuration / 1000)}s)`);
+      this.logger.log(
+        `Client déconnecté: ${clientId} (durée: ${Math.round(connectionDuration / 1000)}s)`,
+      );
     }
   }
 
@@ -50,10 +52,10 @@ export class ConnectionTrackerService {
   getConnectionStats() {
     const now = Date.now();
     const clients = Array.from(this.connectedClients.values());
-    
+
     return {
       totalConnected: clients.length,
-      connections: clients.map(client => ({
+      connections: clients.map((client) => ({
         id: client.id,
         ip: client.ip,
         connectedAt: client.connectedAt,
@@ -70,17 +72,22 @@ export class ConnectionTrackerService {
     const clients = Array.from(this.connectedClients.values());
     const activeThreshold = 30000; // 30 secondes
 
-    const activeClients = clients.filter(client => 
-      (now - client.lastActivity) < activeThreshold
+    const activeClients = clients.filter(
+      (client) => now - client.lastActivity < activeThreshold,
     ).length;
 
     return {
       totalConnected: clients.length,
       activeClients,
       inactiveClients: clients.length - activeClients,
-      averageConnectionTime: clients.length > 0 
-        ? Math.round(clients.reduce((sum, client) => sum + (now - client.connectedAt), 0) / clients.length / 1000)
-        : 0,
+      averageConnectionTime:
+        clients.length > 0
+          ? Math.round(
+              clients.reduce((sum, client) => sum + (now - client.connectedAt), 0) /
+                clients.length /
+                1000,
+            )
+          : 0,
     };
   }
 }

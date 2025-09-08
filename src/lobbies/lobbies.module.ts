@@ -5,5 +5,4 @@ import { LobbiesService } from './lobbies.service';
   providers: [LobbiesService],
   exports: [LobbiesService],
 })
-
 export class LobbiesModule {}

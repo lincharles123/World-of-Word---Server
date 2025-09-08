@@ -1,4 +1,5 @@
-import { IsString, IsInt } from 'class-validator';
+import { IsString, IsInt, IsEnum } from 'class-validator';
+import { LobbyState } from '../enums/lobby-state.enum';
 
 export class LobbyCreateDto {
   @IsString()
@@ -6,4 +7,7 @@ export class LobbyCreateDto {
 
   @IsInt()
   maxPlayers: number;
+
+  @IsEnum(LobbyState)
+  state: LobbyState = LobbyState.PENDING;
 }

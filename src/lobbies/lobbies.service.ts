@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Lobby, MobilePlayer } from './types';
 import { randomUUID } from 'node:crypto';
+import { LobbyState } from './enums/lobby-state.enum';
 
 @Injectable()
 export class LobbiesService {
@@ -18,6 +19,7 @@ export class LobbiesService {
       hostSocketId,
       maxPlayers,
       players: [],
+      state: LobbyState.PENDING,
     };
 
     this.lobbies.set(roomId, lobby);
@@ -37,8 +39,10 @@ export class LobbiesService {
   }
 
   addMobile(lobby: Lobby, username: string, socketId: string): MobilePlayer {
+    if (lobby.state !== LobbyState.PENDING) {
+      throw new Error('Cannot join a lobby that is not pending');
+    }
     const player: MobilePlayer = { username, socketId };
-
     lobby.players.push(player);
 
     console.log(`📱 Mobile "${player.username}" ajouté dans lobby ${lobby.roomId}`);
