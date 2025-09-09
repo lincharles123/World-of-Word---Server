@@ -5,6 +5,7 @@ import { WsGateway } from './ws.gateway';
 import { LobbiesModule } from './lobbies/lobbies.module';
 import { GamesModule } from './games/games.module';
 import { AdminModule } from './admin/admin.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AdminModule } from './admin/admin.module';
     LobbiesModule,
     AdminModule,
     GamesModule,
+    EventsModule,
   ],
   providers: [WsGateway],
 })

@@ -46,6 +46,12 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     GAME_START_NOTIFY: 'game:start-notify',
     GAME_END: 'game:end',
     GAME_END_NOTIFY: 'game:end-notify',
+    EVENT_PLAYER: 'event:player',
+    EVENT_PLAYER_NOTIFY: 'event:player-notify',
+    EVENT_MUSIC: 'event:music',
+    EVENT_MUSIC_NOTIFY: 'event:music-notify',
+    EVENT_SUCCESS: 'event:success',
+    EVENT_ERROR: 'event:error',
   } as const;
 
   handleConnection(client: Socket) {
