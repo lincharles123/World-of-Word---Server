@@ -27,6 +27,15 @@ import { EventPlayerDto } from './events/players/dto/event-player.dto';
 import { GameEndDto } from './games/dto/game-end.dto';
 import { EventPlayerNotificationDto } from './events/players/dto/event-player-notify.dto';
 import { PlayersService } from './events/players/players.service';
+import { EventMusicNotificationDto } from './events/musics/dto/event-music-notify.dto';
+import { MusicsService } from './events/musics/musics.service';
+import { OverlayService } from './events/overlay/overlay.service';
+import { PlatformsService } from './events/platforms/platforms.service';
+import { EventMusicDto } from './events/musics/dto/event-music.dto';
+import { EventOverlayDto } from './events/overlay/dto/event-overlay.dto';
+import { EventOverlayNotificationDto } from './events/overlay/dto/event-overlay-notify.dto';
+import { EventPlatformDto } from './events/platforms/dto/event-platform.dto';
+import { EventPlatformNotificationDto } from './events/platforms/dto/event-platform-notify.dto';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -39,6 +48,9 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly connectionTracker: ConnectionTrackerService,
     private readonly games: GamesService,
     private readonly players: PlayersService,
+    private readonly music: MusicsService,
+    private readonly overlay: OverlayService,
+    private readonly platform: PlatformsService,
   ) {}
 
   static EV = {
@@ -46,6 +58,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     LOBBY_CREATED: 'lobby:created',
     LOBBY_JOIN: 'lobby:join',
     LOBBY_JOIN_SUCCESS: 'lobby:join:success',
+    LOBBY_JOIN_ERROR: 'lobby:join:error',
     LOBBY_PLAYER_JOINED: 'lobby:player:joined',
     GAME_START: 'game:start',
     GAME_START_NOTIFY: 'game:start:notify',
@@ -55,6 +68,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     EVENT_PLAYER_NOTIFY: 'event:player:notify',
     EVENT_MUSIC: 'event:music',
     EVENT_MUSIC_NOTIFY: 'event:music:notify',
+    EVENT_OVERLAY: 'event:overlay',
+    EVENT_OVERLAY_NOTIFY: 'event:overlay:notify',
+    EVENT_PLATFORM: 'event:platform',
+    EVENT_PLATFORM_NOTIFY: 'event:platform:notify',
     EVENT_SUCCESS: 'event:success',
     EVENT_ERROR: 'event:error',
   } as const;
@@ -103,7 +120,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByToken(dto.token);
     if (lobby) {
       if (lobby.state && lobby.state !== LobbyState.PENDING) {
-        client.emit('lobby:join-error', {
+        console.log(`❌ Tentative de rejoindre un lobby non disponible: ${lobby.roomId}`);
+        client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
           message: 'Lobby already started or finished',
           code: 'LOBBY_NOT_PENDING',
         });
@@ -112,6 +130,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const player = this.lobbies.addMobile(lobby, dto.username, client.id);
       client.data.roomId = lobby.roomId;
+      client.data.username = dto.username;
       client.join(`room:${lobby.roomId}`);
       client.join(`room:${lobby.roomId}:mobiles`);
 
@@ -132,7 +151,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, playerJoinedPayload);
     } else {
-      client.emit('lobby:join-error', { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
+      client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
     }
   }
 
@@ -154,7 +173,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage(WsGateway.EV.GAME_END)
-  onGameEnd(@MessageBody() data: GameEndDto, @ConnectedSocket() client: Socket) {
+  onGameEnd(@MessageBody() dto: GameEndDto, @ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
     const lobby = this.lobbies.findByRoomId(roomId);
     if (lobby) {
@@ -165,13 +184,13 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const payload = new GameEndNotifyDto(roomId);
 
-    this.games.endGame(roomId, data.score, new Date());
+    this.games.endGame(roomId, dto.score, new Date());
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_END_NOTIFY, payload);
     this.lobbies.reset(roomId);
   }
 
   @SubscribeMessage(WsGateway.EV.EVENT_PLAYER)
-  onEventPlayer(@MessageBody() data: EventPlayerDto, @ConnectedSocket() client: Socket) {
+  onEventPlayer(@MessageBody() dto: EventPlayerDto, @ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
     const lobby = this.lobbies.findByRoomId(roomId);
     if (!lobby) {
@@ -181,14 +200,109 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       return;
     }
-    const word = data.word;
+    const word = dto.word;
     if (!word) {
       client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
       return;
     }
 
-    const payload = new EventPlayerNotificationDto(word, this.players.getPlayerEffect(word));
+    const payload = new EventPlayerNotificationDto(
+      client.data.username,
+      word,
+      this.players.getPlayerEffect(word),
+    );
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLAYER_NOTIFY, payload);
+    client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
+    return;
+  }
+
+  @SubscribeMessage(WsGateway.EV.EVENT_MUSIC)
+  onEventMusic(@MessageBody() dto: EventMusicDto, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+    if (!lobby) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Lobby not found',
+        code: 'LOBBY_NOT_FOUND',
+      });
+      return;
+    }
+    const word = dto.word;
+    if (!word) {
+      client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
+      return;
+    }
+
+    const payload = new EventMusicNotificationDto(
+      client.data.username,
+      word,
+      this.music.getMusicEffect(word),
+    );
+    this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_MUSIC_NOTIFY, payload);
+    client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
+    return;
+  }
+
+  @SubscribeMessage(WsGateway.EV.EVENT_OVERLAY)
+  onEventOverlay(@MessageBody() dto: EventOverlayDto, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+    if (!lobby) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Lobby not found',
+        code: 'LOBBY_NOT_FOUND',
+      });
+      return;
+    }
+    const word = dto.word;
+    if (!word) {
+      client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
+      return;
+    }
+
+    const payload = new EventOverlayNotificationDto(
+      client.data.username,
+      word,
+      this.overlay.getOverlayEffect(word),
+    );
+    this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_OVERLAY_NOTIFY, payload);
+    client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
+    return;
+  }
+
+  @SubscribeMessage(WsGateway.EV.EVENT_PLATFORM)
+  onEventPlatform(@MessageBody() dto: EventPlatformDto, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+    if (!lobby) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Lobby not found',
+        code: 'LOBBY_NOT_FOUND',
+      });
+      return;
+    }
+    const word = dto.word;
+    if (!word) {
+      client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
+      return;
+    }
+
+    const platform = dto.platform;
+    if (!platform) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Platform is required',
+        code: 'PLATFORM_REQUIRED',
+      });
+      return;
+    }
+
+    const payload = new EventPlatformNotificationDto(
+      client.data.username,
+      word,
+      this.platform.getPlatformEffect(word),
+      platform,
+    );
+    this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLATFORM_NOTIFY, payload);
     client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
     return;
   }
