@@ -103,7 +103,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByToken(dto.token);
     if (lobby) {
       if (lobby.state && lobby.state !== LobbyState.PENDING) {
-        console.log(`❌ Tentative de rejoindre un lobby non disponible: ${lobby.roomId}`);
         client.emit('lobby:join-error', {
           message: 'Lobby already started or finished',
           code: 'LOBBY_NOT_PENDING',
@@ -133,7 +132,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, playerJoinedPayload);
     } else {
-      console.log(`❌ Tentative de rejoindre un lobby inconnu avec le token: ${dto.token}`);
       client.emit('lobby:join-error', { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
     }
   }
@@ -144,11 +142,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByRoomId(roomId);
     if (lobby) {
       if (lobby.state && lobby.state !== LobbyState.PENDING) {
-        console.log(`❌ Tentative de rejoindre un lobby non disponible: ${lobby.roomId}`);
-        client.emit('lobby:join-error', {
-          message: 'Lobby already started or finished',
-          code: 'LOBBY_NOT_PENDING',
-        });
         return;
       }
     }
@@ -166,11 +159,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByRoomId(roomId);
     if (lobby) {
       if (lobby.state && lobby.state !== LobbyState.PENDING) {
-        console.log(`❌ Tentative de rejoindre un lobby non disponible: ${lobby.roomId}`);
-        client.emit('lobby:join-error', {
-          message: 'Lobby already started or finished',
-          code: 'LOBBY_NOT_PENDING',
-        });
         return;
       }
     }
