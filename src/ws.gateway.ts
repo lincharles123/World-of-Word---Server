@@ -156,9 +156,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const payload = new GameStartNotifyDto(roomId);
 
     this.games.startGame(roomId, 'host', new Date());
-    this.lobbies.getMobilesInLobby(roomId).forEach((mobile) => {
-      this.server.to(mobile.socketId).emit(WsGateway.EV.GAME_START_NOTIFY, payload);
-    });
+    this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_START_NOTIFY, payload);
     this.lobbies.start(roomId);
   }
 
@@ -180,9 +178,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const payload = new GameEndNotifyDto(roomId);
 
     this.games.endGame(roomId, data.score, new Date());
-    this.lobbies.getMobilesInLobby(roomId).forEach((mobile) => {
-      this.server.to(mobile.socketId).emit(WsGateway.EV.GAME_END_NOTIFY, payload);
-    });
+    this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_END_NOTIFY, payload);
     this.lobbies.reset(roomId);
   }
 
@@ -191,7 +187,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const roomId = client.data.roomId;
     const lobby = this.lobbies.findByRoomId(roomId);
     if (!lobby) {
-      client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Lobby not found',
+        code: 'LOBBY_NOT_FOUND',
+      });
       return;
     }
     const word = data.word;

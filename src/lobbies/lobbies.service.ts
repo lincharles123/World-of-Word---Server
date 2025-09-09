@@ -56,12 +56,6 @@ export class LobbiesService {
     return player;
   }
 
-  getMobilesInLobby(roomId: string): MobilePlayer[] {
-    const lobby = this.lobbies.get(roomId);
-    console.log(lobby.players);
-    return lobby.players;
-  }
-
   start(roomId: string): void {
     const lobby = this.lobbies.get(roomId);
     lobby.state = LobbyState.INGAME;
