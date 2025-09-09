@@ -23,6 +23,10 @@ import { ConnectionTrackerService } from './admin/services/connection-tracker.se
 import { LobbyState } from './lobbies/enums/lobby-state.enum';
 import { GamesService } from './games/games.service';
 import { GameEndNotifyDto } from './games/dto/game-end-notify.dto';
+import { EventPlayerDto } from './events/players/dto/event-player.dto';
+import { GameEndDto } from './games/dto/game-end.dto';
+import { EventPlayerNotificationDto } from './events/players/dto/event-player-notify.dto';
+import { PlayersService } from './events/players/players.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -34,22 +38,23 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly rateLimiterService: RateLimiterService,
     private readonly connectionTracker: ConnectionTrackerService,
     private readonly games: GamesService,
+    private readonly players: PlayersService,
   ) {}
 
   static EV = {
     LOBBY_CREATE: 'lobby:create',
     LOBBY_CREATED: 'lobby:created',
     LOBBY_JOIN: 'lobby:join',
-    LOBBY_JOIN_SUCCESS: 'lobby:join-success',
-    LOBBY_PLAYER_JOINED: 'lobby:player-joined',
+    LOBBY_JOIN_SUCCESS: 'lobby:join:success',
+    LOBBY_PLAYER_JOINED: 'lobby:player:joined',
     GAME_START: 'game:start',
-    GAME_START_NOTIFY: 'game:start-notify',
+    GAME_START_NOTIFY: 'game:start:notify',
     GAME_END: 'game:end',
-    GAME_END_NOTIFY: 'game:end-notify',
+    GAME_END_NOTIFY: 'game:end:notify',
     EVENT_PLAYER: 'event:player',
-    EVENT_PLAYER_NOTIFY: 'event:player-notify',
+    EVENT_PLAYER_NOTIFY: 'event:player:notify',
     EVENT_MUSIC: 'event:music',
-    EVENT_MUSIC_NOTIFY: 'event:music-notify',
+    EVENT_MUSIC_NOTIFY: 'event:music:notify',
     EVENT_SUCCESS: 'event:success',
     EVENT_ERROR: 'event:error',
   } as const;
@@ -134,7 +139,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage(WsGateway.EV.GAME_START)
-  onGameStart(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+  onGameStart(@ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
     const lobby = this.lobbies.findByRoomId(roomId);
     if (lobby) {
@@ -158,7 +163,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage(WsGateway.EV.GAME_END)
-  onGameEnd(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+  onGameEnd(@MessageBody() data: GameEndDto, @ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
     const lobby = this.lobbies.findByRoomId(roomId);
     if (lobby) {
@@ -179,6 +184,26 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(mobile.socketId).emit(WsGateway.EV.GAME_END_NOTIFY, payload);
     });
     this.lobbies.reset(roomId);
+  }
+
+  @SubscribeMessage(WsGateway.EV.EVENT_PLAYER)
+  onEventPlayer(@MessageBody() data: EventPlayerDto, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+    if (!lobby) {
+      client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
+      return;
+    }
+    const word = data.word;
+    if (!word) {
+      client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
+      return;
+    }
+
+    const payload = new EventPlayerNotificationDto(word, this.players.getPlayerEffect(word));
+    this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLAYER_NOTIFY, payload);
+    client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
+    return;
   }
 
   '--------------------------[ SECURITY ]--------------------------';

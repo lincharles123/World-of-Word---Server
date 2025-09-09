@@ -6,6 +6,7 @@ import { LobbiesModule } from './lobbies/lobbies.module';
 import { GamesModule } from './games/games.module';
 import { AdminModule } from './admin/admin.module';
 import { EventsModule } from './events/events.module';
+import { PlayersModule } from './events/players/players.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { EventsModule } from './events/events.module';
     AdminModule,
     GamesModule,
     EventsModule,
+    PlayersModule, // Ajouté pour que WsGateway puisse injecter PlayersService
   ],
   providers: [WsGateway],
 })
