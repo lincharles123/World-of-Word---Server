@@ -38,6 +38,10 @@ export class LobbiesService {
     return this.lobbies.get(roomId);
   }
 
+  findByRoomId(roomId: string): Lobby {
+    return this.lobbies.get(roomId);
+  }
+
   addMobile(lobby: Lobby, username: string, socketId: string): MobilePlayer {
     if (lobby.state !== LobbyState.PENDING) {
       throw new Error('Cannot join a lobby that is not pending');
@@ -50,5 +54,23 @@ export class LobbiesService {
     console.log(`   ↳ Joueurs actuels: ${lobby.players.map((p) => p.username).join(', ')}`);
 
     return player;
+  }
+
+  getMobilesInLobby(roomId: string): MobilePlayer[] {
+    const lobby = this.lobbies.get(roomId);
+    console.log(lobby.players);
+    return lobby.players;
+  }
+
+  start(roomId: string): void {
+    const lobby = this.lobbies.get(roomId);
+    lobby.state = LobbyState.INGAME;
+    return;
+  }
+
+  reset(roomId: string): void {
+    const lobby = this.lobbies.get(roomId);
+    lobby.state = LobbyState.PENDING;
+    return;
   }
 }

@@ -14,12 +14,15 @@ import { LobbyCreatedDto, QrPayloadDto } from './lobbies/dto/lobby-created.dto';
 import { LobbyJoinSuccessDto } from './lobbies/dto/lobby-join-success.dto';
 import { LobbyJoinDto } from './lobbies/dto/lobby-join.dto';
 import { LobbyPlayerJoined } from './lobbies/dto/lobby-player-joined.dto';
+import { GameStartNotifyDto } from './games/dto/game-start-notify.dto';
 
 import { LobbiesService } from './lobbies/lobbies.service';
 import { CooldownService } from './admin/services/cooldown.service';
 import { RateLimiterService } from './admin/services/rate-limiter.service';
 import { ConnectionTrackerService } from './admin/services/connection-tracker.service';
 import { LobbyState } from './lobbies/enums/lobby-state.enum';
+import { GamesService } from './games/games.service';
+import { GameEndNotifyDto } from './games/dto/game-end-notify.dto';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -30,6 +33,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly cooldownService: CooldownService,
     private readonly rateLimiterService: RateLimiterService,
     private readonly connectionTracker: ConnectionTrackerService,
+    private readonly games: GamesService,
   ) {}
 
   static EV = {
@@ -38,6 +42,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     LOBBY_JOIN: 'lobby:join',
     LOBBY_JOIN_SUCCESS: 'lobby:join-success',
     LOBBY_PLAYER_JOINED: 'lobby:player-joined',
+    GAME_START: 'game:start',
+    GAME_START_NOTIFY: 'game:start-notify',
+    GAME_END: 'game:end',
+    GAME_END_NOTIFY: 'game:end-notify',
   } as const;
 
   handleConnection(client: Socket) {
@@ -61,9 +69,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(WsGateway.EV.LOBBY_CREATE)
   onCreate(@MessageBody() dto: LobbyCreateDto, @ConnectedSocket() client: Socket) {
     const lobby = this.lobbies.create(dto.wsUrl, client.id, dto.maxPlayers);
-
     client.data.roomId = lobby.roomId;
-    console.log(client.data.roomId);
     client.join(`room:${lobby.roomId}`);
 
     const payload: LobbyCreatedDto = {
@@ -95,7 +101,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const player = this.lobbies.addMobile(lobby, dto.username, client.id);
-
+      client.data.roomId = lobby.roomId;
       client.join(`room:${lobby.roomId}`);
       client.join(`room:${lobby.roomId}:mobiles`);
 
@@ -119,6 +125,54 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`❌ Tentative de rejoindre un lobby inconnu avec le token: ${dto.token}`);
       client.emit('lobby:join-error', { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
     }
+  }
+
+  @SubscribeMessage(WsGateway.EV.GAME_START)
+  onGameStart(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+    if (lobby) {
+      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+        console.log(`❌ Tentative de rejoindre un lobby non disponible: ${lobby.roomId}`);
+        client.emit('lobby:join-error', {
+          message: 'Lobby already started or finished',
+          code: 'LOBBY_NOT_PENDING',
+        });
+        return;
+      }
+    }
+
+    const payload = new GameStartNotifyDto(roomId);
+
+    this.games.startGame(roomId, 'host', new Date());
+    this.lobbies.getMobilesInLobby(roomId).forEach((mobile) => {
+      this.server.to(mobile.socketId).emit(WsGateway.EV.GAME_START_NOTIFY, payload);
+    });
+    this.lobbies.start(roomId);
+  }
+
+  @SubscribeMessage(WsGateway.EV.GAME_END)
+  onGameEnd(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+    if (lobby) {
+      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+        console.log(`❌ Tentative de rejoindre un lobby non disponible: ${lobby.roomId}`);
+        client.emit('lobby:join-error', {
+          message: 'Lobby already started or finished',
+          code: 'LOBBY_NOT_PENDING',
+        });
+        return;
+      }
+    }
+
+    const payload = new GameEndNotifyDto(roomId);
+
+    this.games.endGame(roomId, data.score, new Date());
+    this.lobbies.getMobilesInLobby(roomId).forEach((mobile) => {
+      this.server.to(mobile.socketId).emit(WsGateway.EV.GAME_END_NOTIFY, payload);
+    });
+    this.lobbies.reset(roomId);
   }
 
   '--------------------------[ SECURITY ]--------------------------';
