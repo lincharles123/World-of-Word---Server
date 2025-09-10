@@ -1,7 +1,7 @@
 import { IsEnum, IsString } from 'class-validator';
 import { EffectEnum } from 'src/events/enum/effect.enum';
 
-export class EventPlayerNotificationDto {
+export class EventPlatformNotificationDto {
   @IsString()
   username: string;
 
@@ -11,9 +11,13 @@ export class EventPlayerNotificationDto {
   @IsEnum(EffectEnum)
   effect: EffectEnum;
 
-  constructor(username: string, word: string, effect: EffectEnum) {
+  @IsString()
+  platform: string;
+
+  constructor(username: string, word: string, effect: EffectEnum, platform: string) {
     this.username = username;
     this.word = word;
     this.effect = effect;
+    this.platform = platform;
   }
 }
