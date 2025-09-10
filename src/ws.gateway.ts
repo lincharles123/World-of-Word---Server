@@ -36,6 +36,7 @@ import { EventOverlayDto } from './events/overlay/dto/event-overlay.dto';
 import { EventOverlayNotificationDto } from './events/overlay/dto/event-overlay-notify.dto';
 import { EventPlatformDto } from './events/platforms/dto/event-platform.dto';
 import { EventPlatformNotificationDto } from './events/platforms/dto/event-platform-notify.dto';
+import { LobbyPlayerDisconnectedDto } from './lobbies/dto/lobby-player-disconnected.dto';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -60,6 +61,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     LOBBY_JOIN_SUCCESS: 'lobby:join:success',
     LOBBY_JOIN_ERROR: 'lobby:join:error',
     LOBBY_PLAYER_JOINED: 'lobby:player:joined',
+    LOBBY_PLAYER_DISCONNECTED: 'lobby:player:disconnected',
+    LOBBY_DISCONNECTED: 'lobby:disconnected',
     GAME_START: 'game:start',
     GAME_START_NOTIFY: 'game:start:notify',
     GAME_END: 'game:end',
@@ -90,6 +93,24 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+
+    if (lobby) {
+      if (client.id === lobby.hostSocketId) {
+        console.log(`❌ Host disconnected, closing lobby ${lobby.roomId}`);
+        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_DISCONNECTED, {});
+        lobby.players.forEach(player => {
+          const socket = this.server.sockets.sockets.get(player.socketId);
+          socket.disconnect(true);
+        });
+        this.lobbies.removeLobby(roomId);
+      } else {
+        this.lobbies.removeMobile(lobby, client.id);
+        this.server.to(lobby.hostSocketId).emit(WsGateway.EV.LOBBY_PLAYER_DISCONNECTED, new LobbyPlayerDisconnectedDto(client.data.username));
+      }
+    }
+
     console.log(`🔌 Client déconnecté: ${client.id}`);
     this.connectionTracker.removeClient(client.id);
   }

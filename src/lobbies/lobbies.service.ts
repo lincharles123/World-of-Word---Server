@@ -67,4 +67,17 @@ export class LobbiesService {
     lobby.state = LobbyState.PENDING;
     return;
   }
+
+  removeLobby(roomId: string): void {
+    const lobby = this.lobbies.get(roomId);
+    this.tokenToRoom.delete(lobby.joinToken);
+    this.lobbies.delete(roomId);
+    return;
+  }
+
+  removeMobile(lobby: Lobby, socketId: string): void {
+    const index = lobby.players.findIndex((p) => p.socketId === socketId);
+    lobby.players.splice(index);
+    return;
+  }
 }
