@@ -200,6 +200,15 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       return;
     }
+
+    if (lobby.state !== LobbyState.INGAME) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Lobby is not in-game',
+        code: 'LOBBY_NOT_INGAME',
+      });
+      return;
+    }
+
     const word = dto.word;
     if (!word) {
       client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
@@ -227,6 +236,15 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       return;
     }
+
+    if (lobby.state !== LobbyState.INGAME) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Lobby is not in-game',
+        code: 'LOBBY_NOT_INGAME',
+      });
+      return;
+    }
+
     const word = dto.word;
     if (!word) {
       client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
@@ -254,6 +272,15 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       return;
     }
+
+    if (lobby.state !== LobbyState.INGAME) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Lobby is not in-game',
+        code: 'LOBBY_NOT_INGAME',
+      });
+      return;
+    }
+
     const word = dto.word;
     if (!word) {
       client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
@@ -281,6 +308,15 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       return;
     }
+
+    if (lobby.state !== LobbyState.INGAME) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Lobby is not in-game',
+        code: 'LOBBY_NOT_INGAME',
+      });
+      return;
+    }
+    
     const word = dto.word;
     if (!word) {
       client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
