@@ -7,9 +7,4 @@ export class LobbyPlayerDisconnectedDto {
 
   @IsEnum(LobbyActor)
   actor: LobbyActor;
-
-  constructor(username: string, actor:LobbyActor) {
-    this.username = username;
-    this.actor = actor;
-  }
 }

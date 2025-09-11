@@ -63,6 +63,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     LOBBY_JOIN_ERROR: 'lobby:join:error',
     LOBBY_PLAYER_JOINED: 'lobby:player:joined',
     LOBBY_PLAYER_DISCONNECTED: 'lobby:player:disconnected',
+    LOBBY_CLOSED: 'lobby:closed',
     GAME_START: 'game:start',
     GAME_START_NOTIFY: 'game:start:notify',
     GAME_END: 'game:end',
@@ -92,30 +93,43 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  handleDisconnect(client: Socket) {
-    const roomId = client.data.roomId;
+  async handleDisconnect(client: Socket) {
+    const roomId = client.data.roomId as string | undefined;
     const lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
       const actor = client.id === lobby.hostSocketId ? LobbyActor.PC : LobbyActor.MOBILE;
-      const dto = new LobbyPlayerDisconnectedDto(client.data.username, actor)
-      this.server.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_DISCONNECTED, dto);
-      
+
+      const payload: LobbyPlayerDisconnectedDto = {
+        username: client.data.username,
+        actor,
+      };
+
+      this.server.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_DISCONNECTED, payload);
+
       if (actor === LobbyActor.PC) {
-        console.log(`❌ Host disconnected, closing lobby ${lobby.roomId}`);
-        lobby.players.forEach(player => {
-          const socket = this.server.sockets.sockets.get(player.socketId);
-          socket.disconnect(true);
+        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_CLOSED, {
+          roomId: lobby.roomId,
+          reason: 'host_disconnected',
         });
 
-        this.lobbies.removeLobby(roomId);
+        const sockets = await this.server.in(`room:${lobby.roomId}:mobiles`).fetchSockets();
+        for (const s of sockets) {
+          s.leave(`room:${lobby.roomId}`);
+          s.leave(`room:${lobby.roomId}:mobiles`);
+          s.data.roomId = undefined;
+          s.data.username = undefined;
+        }
+
+        this.server
+          .in(`room:${lobby.roomId}`)
+          .socketsLeave([`room:${lobby.roomId}`, `room:${lobby.roomId}:mobiles`]);
+        this.lobbies.removeLobby(lobby.roomId);
       } else {
-        console.log(`❌ Mobile player disconnected from lobby ${lobby.roomId}`);
         this.lobbies.removeMobile(lobby, client.id);
       }
     }
 
-    console.log(`🔌 Client déconnecté: ${client.id}`);
     this.connectionTracker.removeClient(client.id);
   }
 
@@ -177,7 +191,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, playerJoinedPayload);
     } else {
-      client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
+      client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
+        message: 'Lobby not found',
+        code: 'LOBBY_NOT_FOUND',
+      });
     }
   }
 
@@ -342,7 +359,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       return;
     }
-    
+
     const word = dto.word;
     if (!word) {
       client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
