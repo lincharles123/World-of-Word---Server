@@ -6,6 +6,6 @@ import { effectMap } from '../effect-map';
 export class PlatformsService {
   getPlatformEffect(word: string): EffectEnum {
     const wordLower = word.toLowerCase();
-    return effectMap[wordLower] || EffectEnum.NONE;
+    return effectMap[wordLower]?.effect || EffectEnum.NONE;
   }
 }
