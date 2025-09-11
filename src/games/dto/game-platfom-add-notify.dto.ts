@@ -6,9 +6,4 @@ export class GamePlatformAddNotifyDto {
 
   @IsString()
   id: string;
-
-  constructor(roomId: string, id: string) {
-    this.roomId = roomId;
-    this.id = id;
-  }
 }

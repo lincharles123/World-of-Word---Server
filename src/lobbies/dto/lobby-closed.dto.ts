@@ -6,9 +6,4 @@ export class LobbyClosedDto {
 
   @IsString()
   reason: string;
-
-  constructor(roomId: string, reason: string) {
-    this.roomId = roomId;
-    this.reason = reason;
-  }
 }

@@ -13,7 +13,7 @@ export class GamesService {
       map: new Map<string, any>(),
     };
     this.games.set(roomId, newGame);
-    
+
     console.log(`🚀 Jeu démarré dans le lobby: ${roomId} pour l'utilisateur: ${username}`);
   }
 
