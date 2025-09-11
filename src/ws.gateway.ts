@@ -37,6 +37,7 @@ import { EventOverlayNotificationDto } from './events/overlay/dto/event-overlay-
 import { EventPlatformDto } from './events/platforms/dto/event-platform.dto';
 import { EventPlatformNotificationDto } from './events/platforms/dto/event-platform-notify.dto';
 import { LobbyPlayerDisconnectedDto } from './lobbies/dto/lobby-player-disconnected.dto';
+import { LobbyActor } from './lobbies/enums/lobby-actor.enum';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -62,7 +63,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     LOBBY_JOIN_ERROR: 'lobby:join:error',
     LOBBY_PLAYER_JOINED: 'lobby:player:joined',
     LOBBY_PLAYER_DISCONNECTED: 'lobby:player:disconnected',
-    LOBBY_DISCONNECTED: 'lobby:disconnected',
     GAME_START: 'game:start',
     GAME_START_NOTIFY: 'game:start:notify',
     GAME_END: 'game:end',
@@ -97,17 +97,21 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
-      if (client.id === lobby.hostSocketId) {
+      const actor = client.id === lobby.hostSocketId ? LobbyActor.PC : LobbyActor.MOBILE;
+      const dto = new LobbyPlayerDisconnectedDto(client.data.username, actor)
+      this.server.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_DISCONNECTED, dto);
+      
+      if (actor === LobbyActor.PC) {
         console.log(`❌ Host disconnected, closing lobby ${lobby.roomId}`);
-        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_DISCONNECTED, {});
         lobby.players.forEach(player => {
           const socket = this.server.sockets.sockets.get(player.socketId);
           socket.disconnect(true);
         });
+
         this.lobbies.removeLobby(roomId);
       } else {
+        console.log(`❌ Mobile player disconnected from lobby ${lobby.roomId}`);
         this.lobbies.removeMobile(lobby, client.id);
-        this.server.to(lobby.hostSocketId).emit(WsGateway.EV.LOBBY_PLAYER_DISCONNECTED, new LobbyPlayerDisconnectedDto(client.data.username));
       }
     }
 
@@ -119,6 +123,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onCreate(@MessageBody() dto: LobbyCreateDto, @ConnectedSocket() client: Socket) {
     const lobby = this.lobbies.create(dto.wsUrl, client.id, dto.maxPlayers);
     client.data.roomId = lobby.roomId;
+    client.data.username = dto.username;
     client.join(`room:${lobby.roomId}`);
 
     const payload: LobbyCreatedDto = {
