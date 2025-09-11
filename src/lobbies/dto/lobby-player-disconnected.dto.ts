@@ -1,10 +1,10 @@
-import { IsString } from 'class-validator';
+import { IsString, IsEnum } from 'class-validator';
+import { LobbyActor } from '../enums/lobby-actor.enum';
 
 export class LobbyPlayerDisconnectedDto {
   @IsString()
   username: string;
 
-  constructor(username: string) {
-    this.username = username;
-  }
+  @IsEnum(LobbyActor)
+  actor: LobbyActor;
 }

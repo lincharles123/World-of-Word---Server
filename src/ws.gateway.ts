@@ -37,6 +37,7 @@ import { EventOverlayNotificationDto } from './events/overlay/dto/event-overlay-
 import { EventPlatformDto } from './events/platforms/dto/event-platform.dto';
 import { EventPlatformNotificationDto } from './events/platforms/dto/event-platform-notify.dto';
 import { LobbyPlayerDisconnectedDto } from './lobbies/dto/lobby-player-disconnected.dto';
+import { LobbyActor } from './lobbies/enums/lobby-actor.enum';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -62,7 +63,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     LOBBY_JOIN_ERROR: 'lobby:join:error',
     LOBBY_PLAYER_JOINED: 'lobby:player:joined',
     LOBBY_PLAYER_DISCONNECTED: 'lobby:player:disconnected',
-    LOBBY_DISCONNECTED: 'lobby:disconnected',
+    LOBBY_CLOSED: 'lobby:closed',
     GAME_START: 'game:start',
     GAME_START_NOTIFY: 'game:start:notify',
     GAME_END: 'game:end',
@@ -92,26 +93,43 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  handleDisconnect(client: Socket) {
-    const roomId = client.data.roomId;
+  async handleDisconnect(client: Socket) {
+    const roomId = client.data.roomId as string | undefined;
     const lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
-      if (client.id === lobby.hostSocketId) {
-        console.log(`❌ Host disconnected, closing lobby ${lobby.roomId}`);
-        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_DISCONNECTED, {});
-        lobby.players.forEach(player => {
-          const socket = this.server.sockets.sockets.get(player.socketId);
-          socket.disconnect(true);
+      const actor = client.id === lobby.hostSocketId ? LobbyActor.PC : LobbyActor.MOBILE;
+
+      const payload: LobbyPlayerDisconnectedDto = {
+        username: client.data.username,
+        actor,
+      };
+
+      this.server.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_DISCONNECTED, payload);
+
+      if (actor === LobbyActor.PC) {
+        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_CLOSED, {
+          roomId: lobby.roomId,
+          reason: 'host_disconnected',
         });
-        this.lobbies.removeLobby(roomId);
+
+        const sockets = await this.server.in(`room:${lobby.roomId}:mobiles`).fetchSockets();
+        for (const s of sockets) {
+          s.leave(`room:${lobby.roomId}`);
+          s.leave(`room:${lobby.roomId}:mobiles`);
+          s.data.roomId = undefined;
+          s.data.username = undefined;
+        }
+
+        this.server
+          .in(`room:${lobby.roomId}`)
+          .socketsLeave([`room:${lobby.roomId}`, `room:${lobby.roomId}:mobiles`]);
+        this.lobbies.removeLobby(lobby.roomId);
       } else {
         this.lobbies.removeMobile(lobby, client.id);
-        this.server.to(lobby.hostSocketId).emit(WsGateway.EV.LOBBY_PLAYER_DISCONNECTED, new LobbyPlayerDisconnectedDto(client.data.username));
       }
     }
 
-    console.log(`🔌 Client déconnecté: ${client.id}`);
     this.connectionTracker.removeClient(client.id);
   }
 
@@ -119,6 +137,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onCreate(@MessageBody() dto: LobbyCreateDto, @ConnectedSocket() client: Socket) {
     const lobby = this.lobbies.create(dto.wsUrl, client.id, dto.maxPlayers);
     client.data.roomId = lobby.roomId;
+    client.data.username = dto.username;
     client.join(`room:${lobby.roomId}`);
 
     const payload: LobbyCreatedDto = {
@@ -172,7 +191,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, playerJoinedPayload);
     } else {
-      client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, { message: 'Lobby not found', code: 'LOBBY_NOT_FOUND' });
+      client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
+        message: 'Lobby not found',
+        code: 'LOBBY_NOT_FOUND',
+      });
     }
   }
 
@@ -337,7 +359,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       return;
     }
-    
+
     const word = dto.word;
     if (!word) {
       client.emit(WsGateway.EV.EVENT_ERROR, { message: 'Word is required', code: 'WORD_REQUIRED' });
