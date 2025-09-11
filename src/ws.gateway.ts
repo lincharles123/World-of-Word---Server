@@ -121,9 +121,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           s.data.username = undefined;
         }
 
-        this.server
-          .in(`room:${lobby.roomId}`)
-          .socketsLeave([`room:${lobby.roomId}`, `room:${lobby.roomId}:mobiles`]);
         this.lobbies.removeLobby(lobby.roomId);
       } else {
         this.lobbies.removeMobile(lobby, client.id);
