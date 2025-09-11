@@ -1,41 +1,55 @@
 import { EffectEnum } from './enum/effect.enum';
 
-export const effectMap: { [key: string]: EffectEnum } = {
+const EV = {
+    EVENT_PLAYER: 'event:player',
+    EVENT_MUSIC: 'event:music',
+    EVENT_OVERLAY: 'event:overlay',
+    EVENT_PLATFORM: 'event:platform',
+} as const;
+
+export class EffectWord {
+  effect: EffectEnum;
+  type: string;
+  constructor(effect: EffectEnum, type: string) {
+    this.effect = effect;
+    this.type = type;
+  }
+}
+
+export const effectMap: { [key: string]: EffectWord } = {
   // Effets glissants
-  glace: EffectEnum.SLIPPERY,
-  glacier: EffectEnum.SLIPPERY,
-  verglas: EffectEnum.SLIPPERY,
-  givré: EffectEnum.SLIPPERY,
-  givre: EffectEnum.SLIPPERY,
-  neige: EffectEnum.SLIPPERY,
-  neigeux: EffectEnum.SLIPPERY,
-  patinoire: EffectEnum.SLIPPERY,
-  glissant: EffectEnum.SLIPPERY,
-  glisse: EffectEnum.SLIPPERY,
+  glace: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  glacier: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  givré: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  verglas: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  givre: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  neige: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  neigeux: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  patinoire: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  glissant: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  glisse: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
 
   // Effets de saut
-  saut: EffectEnum.JUMP,
-  bond: EffectEnum.JUMP,
-  sauter: EffectEnum.JUMP,
-  bondir: EffectEnum.JUMP,
-  sautillant: EffectEnum.JUMP,
-  sautille: EffectEnum.JUMP,
-  rebond: EffectEnum.JUMP,
-  rebondir: EffectEnum.JUMP,
-  élan: EffectEnum.JUMP,
-  sursaut: EffectEnum.JUMP,
-  grimpe: EffectEnum.JUMP,
-  grimper: EffectEnum.JUMP,
+  saut: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
+  bond: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
+  sauter: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
+  bondir: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
+  sautillant: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
+  sautille: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
+  rebond: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLATFORM),
+  rebondir: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLATFORM),
+  élan: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
+  sursaut: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
 
   // Effets d'inversion
-  inverser: EffectEnum.INVERT,
-  retourner: EffectEnum.INVERT,
-  inverse: EffectEnum.INVERT,
-  retourne: EffectEnum.INVERT,
-  inversé: EffectEnum.INVERT,
-  retourné: EffectEnum.INVERT,
-  contraire: EffectEnum.INVERT,
-  opposé: EffectEnum.INVERT,
-  renverser: EffectEnum.INVERT,
-  renverse: EffectEnum.INVERT,
+  inverser: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  retourner: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  inverse: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  retourne: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  inversé: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  retourné: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  contraire: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  opposé: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  renverser: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  renverse: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
 };
