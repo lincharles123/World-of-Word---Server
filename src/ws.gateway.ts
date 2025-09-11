@@ -38,6 +38,7 @@ import { EventPlatformDto } from './events/platforms/dto/event-platform.dto';
 import { EventPlatformNotificationDto } from './events/platforms/dto/event-platform-notify.dto';
 import { LobbyPlayerDisconnectedDto } from './lobbies/dto/lobby-player-disconnected.dto';
 import { LobbyActor } from './lobbies/enums/lobby-actor.enum';
+import { effectMap } from './events/effect-map';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -68,6 +69,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     GAME_START_NOTIFY: 'game:start:notify',
     GAME_END: 'game:end',
     GAME_END_NOTIFY: 'game:end:notify',
+    GAME_WORD: 'game:word',
     EVENT_PLAYER: 'event:player',
     EVENT_PLAYER_NOTIFY: 'event:player:notify',
     EVENT_MUSIC: 'event:music',
@@ -208,8 +210,13 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const payload = new GameStartNotifyDto(roomId);
 
     this.games.startGame(roomId, 'host', new Date());
+
+    const words = Object.keys(effectMap);
+    this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_WORD, { words });
+
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_START_NOTIFY, payload);
     this.lobbies.start(roomId);
+    return;
   }
 
   @SubscribeMessage(WsGateway.EV.GAME_END)
