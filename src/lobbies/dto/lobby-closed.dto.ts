@@ -1,6 +1,9 @@
 import { IsString } from 'class-validator';
 
-export class GameStartNotifyDto {
+export class LobbyClosedDto {
   @IsString()
   roomId: string;
+
+  @IsString()
+  reason: string;
 }

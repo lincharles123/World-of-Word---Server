@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 
-export class GameStartNotifyDto {
+export class GamePlatformAddDto {
   @IsString()
-  roomId: string;
+  id: string;
 }

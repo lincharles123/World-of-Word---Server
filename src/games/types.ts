@@ -1,15 +1,14 @@
 export type Game = {
-  lobbyId: string;
+  roomId: string;
   username: string;
   startDate: Date;
-  map: Mapp[];
+  map: Map<string, Platform>;
   endDate?: Date;
   score?: number;
 };
 
-export type Mapp = {
-  id: string;
-  type: string;
-  is_interractive: boolean;
-  effect: string[];
+export type Platform = {
+  // type: string;
+  // is_interractive: boolean;
+  // effect: string[];
 };
