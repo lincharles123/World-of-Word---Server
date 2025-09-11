@@ -38,6 +38,12 @@ import { EventPlatformDto } from './events/platforms/dto/event-platform.dto';
 import { EventPlatformNotificationDto } from './events/platforms/dto/event-platform-notify.dto';
 import { LobbyPlayerDisconnectedDto } from './lobbies/dto/lobby-player-disconnected.dto';
 import { LobbyActor } from './lobbies/enums/lobby-actor.enum';
+import { LobbyClosedDto } from './lobbies/dto/lobby-closed.dto';
+import { GamePlatformAddDto } from './games/dto/game-platfom-add.dto';
+import { Lobby } from './lobbies/types';
+import { GamePlatformAddNotifyDto } from './games/dto/game-platfom-add-notify.dto';
+import { GamePlatformRemoveDto } from './games/dto/game-platfom-remove.dto';
+import { GamePlatformRemoveNotifyDto } from './games/dto/game-platfom-remove-notify.dto';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -68,6 +74,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     GAME_START_NOTIFY: 'game:start:notify',
     GAME_END: 'game:end',
     GAME_END_NOTIFY: 'game:end:notify',
+    GAME_PLATFORM_ADD: 'game:platform:add',
+    GAME_PLATFORM_ADD_NOTIFY: 'game:platform:add:notify',
+    GAME_PLATFORM_REMOVE: 'game:platform:remove',
+    GAME_PLATFORM_REMOVE_NOTIFY: 'game:platform:remove:notify',
     EVENT_PLAYER: 'event:player',
     EVENT_PLAYER_NOTIFY: 'event:player:notify',
     EVENT_MUSIC: 'event:music',
@@ -108,10 +118,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_DISCONNECTED, payload);
 
       if (actor === LobbyActor.PC) {
-        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_CLOSED, {
-          roomId: lobby.roomId,
-          reason: 'host_disconnected',
-        });
+        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_CLOSED, new LobbyClosedDto(lobby.roomId, 'host_disconnected'));
 
         const sockets = await this.server.in(`room:${lobby.roomId}:mobiles`).fetchSockets();
         for (const s of sockets) {
@@ -229,9 +236,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.lobbies.reset(roomId);
   }
 
-  @SubscribeMessage(WsGateway.EV.EVENT_PLAYER)
-  onEventPlayer(@MessageBody() dto: EventPlayerDto, @ConnectedSocket() client: Socket) {
-    const roomId = client.data.roomId;
+  lobbyInGameCheck(roomId: string, client: Socket): Lobby | undefined {
     const lobby = this.lobbies.findByRoomId(roomId);
     if (!lobby) {
       client.emit(WsGateway.EV.EVENT_ERROR, {
@@ -248,6 +253,17 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       return;
     }
+
+    return lobby;
+  }
+
+  @SubscribeMessage(WsGateway.EV.EVENT_PLAYER)
+  onEventPlayer(@MessageBody() dto: EventPlayerDto, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbyInGameCheck(roomId, client);
+    
+    if (!lobby)
+      return;
 
     const word = dto.word;
     if (!word) {
@@ -260,6 +276,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       word,
       this.players.getPlayerEffect(word),
     );
+
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLAYER_NOTIFY, payload);
     client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
     return;
@@ -268,22 +285,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(WsGateway.EV.EVENT_MUSIC)
   onEventMusic(@MessageBody() dto: EventMusicDto, @ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
-    const lobby = this.lobbies.findByRoomId(roomId);
-    if (!lobby) {
-      client.emit(WsGateway.EV.EVENT_ERROR, {
-        message: 'Lobby not found',
-        code: 'LOBBY_NOT_FOUND',
-      });
+    const lobby = this.lobbyInGameCheck(roomId, client);
+    
+    if (!lobby)
       return;
-    }
-
-    if (lobby.state !== LobbyState.INGAME) {
-      client.emit(WsGateway.EV.EVENT_ERROR, {
-        message: 'Lobby is not in-game',
-        code: 'LOBBY_NOT_INGAME',
-      });
-      return;
-    }
 
     const word = dto.word;
     if (!word) {
@@ -304,22 +309,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(WsGateway.EV.EVENT_OVERLAY)
   onEventOverlay(@MessageBody() dto: EventOverlayDto, @ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
-    const lobby = this.lobbies.findByRoomId(roomId);
-    if (!lobby) {
-      client.emit(WsGateway.EV.EVENT_ERROR, {
-        message: 'Lobby not found',
-        code: 'LOBBY_NOT_FOUND',
-      });
+    const lobby = this.lobbyInGameCheck(roomId, client);
+    
+    if (!lobby)
       return;
-    }
-
-    if (lobby.state !== LobbyState.INGAME) {
-      client.emit(WsGateway.EV.EVENT_ERROR, {
-        message: 'Lobby is not in-game',
-        code: 'LOBBY_NOT_INGAME',
-      });
-      return;
-    }
 
     const word = dto.word;
     if (!word) {
@@ -340,22 +333,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(WsGateway.EV.EVENT_PLATFORM)
   onEventPlatform(@MessageBody() dto: EventPlatformDto, @ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
-    const lobby = this.lobbies.findByRoomId(roomId);
-    if (!lobby) {
-      client.emit(WsGateway.EV.EVENT_ERROR, {
-        message: 'Lobby not found',
-        code: 'LOBBY_NOT_FOUND',
-      });
+    const lobby = this.lobbyInGameCheck(roomId, client);
+    
+    if (!lobby)
       return;
-    }
-
-    if (lobby.state !== LobbyState.INGAME) {
-      client.emit(WsGateway.EV.EVENT_ERROR, {
-        message: 'Lobby is not in-game',
-        code: 'LOBBY_NOT_INGAME',
-      });
-      return;
-    }
 
     const word = dto.word;
     if (!word) {
@@ -382,6 +363,43 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
     return;
   }
+
+  @SubscribeMessage(WsGateway.EV.GAME_PLATFORM_ADD)
+  onGamePlatformAdd(@MessageBody() dto: GamePlatformAddDto, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+    if (lobby) {
+      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+        return;
+      }
+    }
+
+    this.games.addPlatform(roomId, dto.id);
+    console.log(`Adding platform ${dto.id} in room ${roomId}`);
+    const payload = new GamePlatformAddNotifyDto(roomId, dto.id);
+    this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_PLATFORM_ADD_NOTIFY, payload)
+
+    return;
+  }
+
+  @SubscribeMessage(WsGateway.EV.GAME_PLATFORM_REMOVE)
+  onGamePlatformRemove(@MessageBody() dto: GamePlatformRemoveDto, @ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbies.findByRoomId(roomId);
+    if (lobby) {
+      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+        return;
+      }
+    }
+
+    this.games.removePlatform(roomId, dto.id);
+    console.log(`Removing platform ${dto.id} in room ${roomId}`);
+    const payload = new GamePlatformRemoveNotifyDto(roomId, dto.id);
+    this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_PLATFORM_REMOVE_NOTIFY, payload)
+
+    return;
+  }
+
 
   '--------------------------[ SECURITY ]--------------------------';
 
