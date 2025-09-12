@@ -6,9 +6,4 @@ export class EventPlatformDto {
 
   @IsString()
   platform: string;
-
-  constructor(word: string, platform: string) {
-    this.word = word;
-    this.platform = platform;
-  }
 }

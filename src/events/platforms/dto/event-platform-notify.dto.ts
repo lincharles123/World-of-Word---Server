@@ -13,11 +13,4 @@ export class EventPlatformNotificationDto {
 
   @IsString()
   platform: string;
-
-  constructor(username: string, word: string, effect: EffectEnum, platform: string) {
-    this.username = username;
-    this.word = word;
-    this.effect = effect;
-    this.platform = platform;
-  }
 }
