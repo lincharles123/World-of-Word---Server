@@ -307,11 +307,11 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const payload = new EventPlayerNotificationDto(
-      client.data.username,
-      word,
-      this.players.getPlayerEffect(word),
-    );
+    const payload = {
+      "username": client.data.username,
+      "word": word,
+      "effect": this.players.getPlayerEffect(word),
+    };
 
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLAYER_NOTIFY, payload);
 
@@ -338,11 +338,11 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const payload = new EventMusicNotificationDto(
-      client.data.username,
-      word,
-      this.music.getMusicEffect(word),
-    );
+    const payload = {
+      "username": client.data.username,
+      "word": word,
+      "effect": this.music.getMusicEffect(word),
+    };
 
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_MUSIC_NOTIFY, payload);
 
@@ -369,11 +369,11 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const payload = new EventOverlayNotificationDto(
-      client.data.username,
-      word,
-      this.overlay.getOverlayEffect(word),
-    );
+    const payload = {
+      "username": client.data.username,
+      "word": word,
+      "effect": this.overlay.getOverlayEffect(word),
+    };
 
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_OVERLAY_NOTIFY, payload);
 
@@ -411,12 +411,12 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const payload = new EventPlatformNotificationDto(
-      client.data.username,
-      word,
-      this.platform.getPlatformEffect(word),
-      platform,
-    );
+    const payload = {
+      "username": client.data.username,
+      "word": word,
+      "effect": this.platform.getPlatformEffect(word),
+      "platform": platform,
+    };
 
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLATFORM_NOTIFY, payload);
 
@@ -431,7 +431,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
-      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+      if (lobby.state && lobby.state !== LobbyState.INGAME) {
         return;
       }
     }
@@ -459,7 +459,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
-      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+      if (lobby.state && lobby.state !== LobbyState.INGAME) {
         return;
       }
     }
