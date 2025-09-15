@@ -2,13 +2,18 @@ export type Game = {
   roomId: string;
   username: string;
   startDate: Date;
-  map: Map<string, Platform>;
+  map: Map<string, PlatformSet>;
   endDate?: Date;
   score?: number;
 };
 
+export type PlatformSet = {
+  platforms: Platform[];
+  effect: string[];
+};
+
 export type Platform = {
-  // type: string;
-  // is_interractive: boolean;
-  // effect: string[];
+  x: number;
+  y: number;
+  // width: number
 };

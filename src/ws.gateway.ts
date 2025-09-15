@@ -123,11 +123,9 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const payload: LobbyClosedDto = {
           roomId: lobby.roomId,
           reason: 'host_disconnected',
-        }
+        };
 
-        this.server
-          .to(`room:${lobby.roomId}:mobiles`)
-          .emit(WsGateway.EV.LOBBY_CLOSED, payload);
+        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_CLOSED, payload);
 
         const sockets = await this.server.in(`room:${lobby.roomId}:mobiles`).fetchSockets();
         for (const s of sockets) {
@@ -221,7 +219,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onGameStart(@ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
     const lobby = this.lobbies.findByRoomId(roomId);
-
     if (lobby) {
       if (lobby.state && lobby.state !== LobbyState.PENDING) {
         return;
@@ -411,6 +408,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
+    this.games.addEffectToPlatform(roomId, platform, this.platform.getPlatformEffect(word));
+
     const payload = new EventPlatformNotificationDto(
       client.data.username,
       word,
@@ -431,12 +430,12 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
-      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+      if (lobby.state && lobby.state !== LobbyState.INGAME) {
         return;
       }
     }
 
-    this.games.addPlatform(roomId, dto.id);
+    this.games.addPlatform(roomId, dto.id, dto.x, dto.y);
 
     console.log(`Adding platform ${dto.id} in room ${roomId}`);
 
@@ -459,7 +458,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
-      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+      if (lobby.state && lobby.state !== LobbyState.INGAME) {
         return;
       }
     }

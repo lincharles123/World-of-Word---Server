@@ -1,6 +1,12 @@
-import { IsString } from 'class-validator';
+import { IsString, IsNumber } from 'class-validator';
 
 export class GamePlatformAddDto {
   @IsString()
   id: string;
+
+  @IsNumber()
+  x: number;
+
+  @IsNumber()
+  y: number;
 }

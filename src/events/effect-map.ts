@@ -1,10 +1,10 @@
 import { EffectEnum } from './enum/effect.enum';
 
 const EV = {
-    EVENT_PLAYER: 'event:player',
-    EVENT_MUSIC: 'event:music',
-    EVENT_OVERLAY: 'event:overlay',
-    EVENT_PLATFORM: 'event:platform',
+  EVENT_PLAYER: 'event:player',
+  EVENT_MUSIC: 'event:music',
+  EVENT_OVERLAY: 'event:overlay',
+  EVENT_PLATFORM: 'event:platform',
 } as const;
 
 export class EffectWord {
