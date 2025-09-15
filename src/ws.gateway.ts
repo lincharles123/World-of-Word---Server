@@ -25,17 +25,17 @@ import { GamesService } from './games/games.service';
 import { GameEndNotifyDto } from './games/dto/game-end-notify.dto';
 import { EventPlayerDto } from './events/players/dto/event-player.dto';
 import { GameEndDto } from './games/dto/game-end.dto';
-import { EventPlayerNotificationDto } from './events/players/dto/event-player-notify.dto';
+import { EventPlayerNotifyDto } from './events/players/dto/event-player-notify.dto';
 import { PlayersService } from './events/players/players.service';
-import { EventMusicNotificationDto } from './events/musics/dto/event-music-notify.dto';
+import { EventMusicNotifyDto } from './events/musics/dto/event-music-notify.dto';
 import { MusicsService } from './events/musics/musics.service';
 import { OverlayService } from './events/overlay/overlay.service';
 import { PlatformsService } from './events/platforms/platforms.service';
 import { EventMusicDto } from './events/musics/dto/event-music.dto';
 import { EventOverlayDto } from './events/overlay/dto/event-overlay.dto';
-import { EventOverlayNotificationDto } from './events/overlay/dto/event-overlay-notify.dto';
+import { EventOverlayNotifyDto } from './events/overlay/dto/event-overlay-notify.dto';
 import { EventPlatformDto } from './events/platforms/dto/event-platform.dto';
-import { EventPlatformNotificationDto } from './events/platforms/dto/event-platform-notify.dto';
+import { EventPlatformNotifyDto } from './events/platforms/dto/event-platform-notify.dto';
 import { LobbyPlayerDisconnectedDto } from './lobbies/dto/lobby-player-disconnected.dto';
 import { LobbyActor } from './lobbies/enums/lobby-actor.enum';
 import { LobbyClosedDto } from './lobbies/dto/lobby-closed.dto';
@@ -123,11 +123,9 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const payload: LobbyClosedDto = {
           roomId: lobby.roomId,
           reason: 'host_disconnected',
-        }
+        };
 
-        this.server
-          .to(`room:${lobby.roomId}:mobiles`)
-          .emit(WsGateway.EV.LOBBY_CLOSED, payload);
+        this.server.to(`room:${lobby.roomId}:mobiles`).emit(WsGateway.EV.LOBBY_CLOSED, payload);
 
         const sockets = await this.server.in(`room:${lobby.roomId}:mobiles`).fetchSockets();
         for (const s of sockets) {
@@ -221,7 +219,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onGameStart(@ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
     const lobby = this.lobbies.findByRoomId(roomId);
-
     if (lobby) {
       if (lobby.state && lobby.state !== LobbyState.PENDING) {
         return;
@@ -307,7 +304,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const payload = {
+    const payload: EventPlayerNotifyDto = {
       "username": client.data.username,
       "word": word,
       "effect": this.players.getPlayerEffect(word),
@@ -338,7 +335,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const payload = {
+    const payload: EventMusicNotifyDto = {
       "username": client.data.username,
       "word": word,
       "effect": this.music.getMusicEffect(word),
@@ -369,7 +366,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const payload = {
+    const payload: EventOverlayNotifyDto = {
       "username": client.data.username,
       "word": word,
       "effect": this.overlay.getOverlayEffect(word),
@@ -411,12 +408,15 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const payload = {
+    this.games.addEffectToPlatform(roomId, platform, this.platform.getPlatformEffect(word));
+
+    const payload: EventPlatformNotifyDto = {
       "username": client.data.username,
       "word": word,
       "effect": this.platform.getPlatformEffect(word),
       "platform": platform,
     };
+    
 
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLATFORM_NOTIFY, payload);
 
@@ -436,7 +436,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
 
-    this.games.addPlatform(roomId, dto.id);
+    this.games.addPlatform(roomId, dto.id, dto.x, dto.y);
 
     console.log(`Adding platform ${dto.id} in room ${roomId}`);
 
