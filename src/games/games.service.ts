@@ -53,8 +53,6 @@ export class GamesService {
       if (map.get(id).platforms.length === 0) map.delete(id);
       console.log(`➖ Plateforme supprimée: ${id} du jeu du lobby: ${roomId}`);
     }
-
-    console.log(game.map);
   }
 
   addEffectToPlatform(roomId: string, id: string, effect: string): void {
@@ -76,7 +74,5 @@ export class GamesService {
         );
       }
     }
-
-    console.log(game);
   }
 }

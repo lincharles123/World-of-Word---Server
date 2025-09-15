@@ -410,8 +410,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.games.addEffectToPlatform(roomId, platform, this.platform.getPlatformEffect(word));
 
-    this.games.addEffectToPlatform(roomId, platform, this.platform.getPlatformEffect(word));
-
     const payload: EventPlatformNotifyDto = {
       "username": client.data.username,
       "word": word,
