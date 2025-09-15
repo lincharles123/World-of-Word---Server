@@ -10,10 +10,4 @@ export class EventMusicNotificationDto {
 
   @IsEnum(EffectEnum)
   effect: EffectEnum;
-
-  constructor(username: string, word: string, effect: EffectEnum) {
-    this.username = username;
-    this.word = word;
-    this.effect = effect;
-  }
 }
