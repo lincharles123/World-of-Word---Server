@@ -222,18 +222,23 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const words = Object.keys(effectMap);
     const wordTypes = words.map(word => {
-      let type = effectMap[word].type;
-      if(!type) {
+      let types = effectMap[word]?.type;
+      if (!types) {
         throw new Error('No type found for word: ' + word);
       }
-      if(type === 'event:player' || type === 'event:music' || type === 'event:overlay') {
-        type = 'event:add';
-      }
-      else if(type === 'event:platform') {
-        type = 'event:add:platform';
-      }
-      return { word, type };
+      const mappedTypes = types.map(t => {
+        if (t === 'event:player' || t === 'event:music' || t === 'event:overlay') {
+          return t;
+        } else if (t === 'event:platform') {
+          return t;
+        } else {
+          return t;
+        }
+      });
+      const uniqueTypes = Array.from(new Set(mappedTypes));
+      return { word, types: uniqueTypes };
     });
+
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_WORD, { wordTypes });
 
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_START_NOTIFY, payload);
@@ -305,7 +310,17 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return;
     }
-    const payload = this.event.getPayload(word,  client.data.username);
+    console.log('dto received:', dto);
+    if(!dto.type) {
+      client.emit(WsGateway.EV.EVENT_ERROR, {
+        message: 'Type is required',
+        code: 'TYPE_REQUIRED',
+      });
+
+      return;
+    }
+    const payload = this.event.getPayload(word,  client.data.username, dto.type);
+    console.log('Payload generated:', payload);
     for (const [key, value] of payload) {
       if (key === 'event:player') {
         this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLAYER_NOTIFY, value);

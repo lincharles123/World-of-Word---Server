@@ -5,4 +5,5 @@ export enum EffectEnum {
   SLIPPERY = 'slippery',
   JUMPING = 'jumping',
   GROUNDING = 'grounding',
+  NONE = 'none',
 }
