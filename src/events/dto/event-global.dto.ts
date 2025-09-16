@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 
-export class EventPlayerDto {
+export class EventGlobalDto {
   @IsString()
   word: string;
 }

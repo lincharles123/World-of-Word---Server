@@ -18,7 +18,7 @@ import { PlayersModule } from './events/players/players.module';
     AdminModule,
     GamesModule,
     EventsModule,
-    PlayersModule, // Ajouté pour que WsGateway puisse injecter PlayersService
+    PlayersModule,
   ],
   providers: [WsGateway],
 })

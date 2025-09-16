@@ -1,9 +1,7 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
+import { EventGlobalDto } from 'src/events/dto/event-global.dto';
 
-export class EventPlatformDto {
-  @IsString()
-  word: string;
-
+export class EventPlatformDto extends EventGlobalDto {
   @IsString()
   platform: string;
 }

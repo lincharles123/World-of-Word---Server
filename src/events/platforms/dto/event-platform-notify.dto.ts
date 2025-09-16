@@ -1,16 +1,7 @@
-import { IsEnum, IsString } from 'class-validator';
-import { EffectEnum } from 'src/events/enum/effect.enum';
+import { IsString } from 'class-validator';
+import { EventGlobalNotifyDto } from 'src/events/dto/event-global-notify.dto';
 
-export class EventPlatformNotifyDto {
-  @IsString()
-  username: string;
-
-  @IsString()
-  word: string;
-
-  @IsEnum(EffectEnum)
-  effect: EffectEnum;
-
+export class EventPlatformNotifyDto extends EventGlobalNotifyDto {
   @IsString()
   platform: string;
 }
