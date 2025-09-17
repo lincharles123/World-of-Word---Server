@@ -8,7 +8,7 @@ export class Game {
   @Column()
   username: string;
 
-  @Column()
+  @Column('int')
   score: number;
 
   @Column()

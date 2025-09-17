@@ -18,7 +18,7 @@ export class GameDataService {
   find(conditions: Partial<Game>): Promise<Game[]> {
     return this.gameRepository.find({
       where: conditions,
-      order: {score: 'ASC'}
+      order: {"score": 'DESC'}
     })
   }
 }
