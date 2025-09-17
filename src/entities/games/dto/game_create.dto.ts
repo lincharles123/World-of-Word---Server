@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsDate } from 'class-validator';
+import { IsString, IsInt } from 'class-validator';
 
 export class CreateGameDto {
   @IsString()
@@ -10,9 +10,6 @@ export class CreateGameDto {
   @IsInt()
   mobilePlayerNumber: number;
 
-  @IsDate()
-  dateStart: Date;
-
-  @IsDate()
-  dateEnd: Date;
+  @IsInt()
+  time: number;
 }

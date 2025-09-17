@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Query } from '@nestjs/common';
 import { GameDataService } from './game_data.service';
 import { Game } from './game.entity';
+import { GameGetDto } from './dto/game_get.dto';
+
 
 @Controller('games')
 export class GameDataController {
@@ -12,7 +14,7 @@ export class GameDataController {
   }
 
   @Get()
-  findAll(): Promise<Game[]> {
-    return this.gamesService.findAll();
+  getGames(@Query() query: GameGetDto): Promise<Game[]> {
+    return this.gamesService.find(query);
   }
 }

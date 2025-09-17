@@ -8,15 +8,12 @@ export class Game {
   @Column()
   username: string;
 
-  @Column({type: 'int'})
+  @Column()
   score: number;
 
   @Column()
   mobilePlayerNumber: number;
 
-  @Column({ type: 'datetime'})
-  dateStart: Date;
-
-  @Column({ type: 'datetime'})
-  dateEnd: Date;
+  @Column()
+  time: number;
 }

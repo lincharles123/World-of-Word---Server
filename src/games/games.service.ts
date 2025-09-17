@@ -30,8 +30,7 @@ export class GamesService {
       username: game.username,
       score: score,
       mobilePlayerNumber: lobby.players.length,
-      dateEnd: endDate,
-      dateStart : game.startDate,
+      time: endDate.getTime() - game.startDate.getTime()
     }
 
     this.dataService.create(payload)

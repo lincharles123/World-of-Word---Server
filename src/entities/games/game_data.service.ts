@@ -15,7 +15,10 @@ export class GameDataService {
     return this.gameRepository.save(game);
   }
 
-  findAll(): Promise<Game[]> {
-    return this.gameRepository.find();
+  find(conditions: Partial<Game>): Promise<Game[]> {
+    return this.gameRepository.find({
+      where: conditions,
+      order: {score: 'ASC'}
+    })
   }
 }
