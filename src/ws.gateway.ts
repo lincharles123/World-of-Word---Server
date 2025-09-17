@@ -172,6 +172,28 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
+      if(lobby.maxPlayers === lobby.players.length) {
+        console.log(`❌ Le lobby ${lobby.roomId} est plein`)
+
+        client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
+          message: 'Lobby is Full',
+          code: 'LOBBY_FULL',
+        });
+
+        return;
+      }
+
+      if(lobby.players.find((player) => player.username === dto.username)){
+        console.log(`❌ L'utilisateur ${dto.username} existe dans le lobby ${lobby.roomId}`)
+
+        client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
+          message: 'Username already exists',
+          code: 'USERNAME_ALREADY_EXIST',
+        });
+
+        return;
+      }
+
       const player = this.lobbies.addMobile(lobby, dto.username, client.id);
 
       client.data.roomId = lobby.roomId;
