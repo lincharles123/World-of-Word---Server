@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Game } from './types';
+import { GameDataService } from 'src/entities/games/game_data.service';
+import { CreateGameDto } from 'src/entities/games/dto/game_create.dto';
+import { Lobby } from 'src/lobbies/types';
 
 @Injectable()
 export class GamesService {
+  constructor(
+      private readonly dataService: GameDataService,
+    ) {}
   private games: Map<string, Game> = new Map();
 
   startGame(roomId: string, username: string, startDate: Date): void {
@@ -17,15 +23,19 @@ export class GamesService {
     console.log(`🚀 Jeu démarré dans le lobby: ${roomId} pour l'utilisateur: ${username}`);
   }
 
-  endGame(roomId: string, score: number, endDate: Date): void {
+  endGame(lobby: Lobby, score: number, endDate: Date): void {
+    const roomId = lobby.roomId
     const game = this.games.get(roomId);
-    if (game) {
-      game.endDate = endDate;
-      game.score = score;
-      this.games.set(roomId, game);
+    const payload: CreateGameDto = {
+      username: game.username,
+      roomId: roomId,
+      score: score,
+      mobilePlayerNumber: lobby.players.length,
+      dateEnd: endDate,
+      dateStart : game.startDate,
     }
 
-    // To do: save the game to database for leaderboard, etc.
+    this.dataService.create(payload)
     this.games.delete(roomId);
 
     console.log(`🏁 Jeu terminé dans le lobby: ${roomId} avec un score de ${score}`);

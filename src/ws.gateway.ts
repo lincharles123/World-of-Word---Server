@@ -250,10 +250,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(WsGateway.EV.GAME_END)
   onGameEnd(@MessageBody() dto: GameEndDto, @ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
-    const lobby = this.lobbies.findByRoomId(roomId);
+    const lobby: Lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
-      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+      if (lobby.state && lobby.state !== LobbyState.INGAME) {
         return;
       }
     }
@@ -262,7 +262,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       roomId: roomId,
     };
 
-    this.games.endGame(roomId, dto.score, new Date());
+    this.games.endGame(lobby, dto.score, new Date());
 
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_END_NOTIFY, payload);
 
