@@ -1,10 +1,9 @@
 export enum EffectEnum {
-  // Glissant
+  FORWARD = 'forward',
+  BACKWARD = 'backward',
+  BOUNCY = 'bouncy',
   SLIPPERY = 'slippery',
-  // Jump boost
-  JUMP = 'jump',
-  // Inversion des touches
-  INVERT = 'invert',
-  // Rien
+  JUMPING = 'jumping',
+  GROUNDING = 'grounding',
   NONE = 'none',
 }

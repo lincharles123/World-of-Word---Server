@@ -9,47 +9,83 @@ const EV = {
 
 export class EffectWord {
   effect: EffectEnum;
-  type: string;
-  constructor(effect: EffectEnum, type: string) {
+  type: string[];
+  constructor(effect: EffectEnum, type: string[]) {
     this.effect = effect;
     this.type = type;
   }
 }
 
 export const effectMap: { [key: string]: EffectWord } = {
-  // Effets glissants
-  glace: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  glacier: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  givré: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  verglas: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  givre: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  neige: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  neigeux: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  patinoire: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  glissant: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
-  glisse: new EffectWord(EffectEnum.SLIPPERY, EV.EVENT_PLATFORM),
+  // --- SLIPPERY ---
+  glace: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  glacier: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  givré: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  verglas: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  givre: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  neige: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  neigeux: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  patinoire: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  glissant: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  glisse: new EffectWord(EffectEnum.SLIPPERY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
 
-  // Effets de saut
-  saut: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
-  bond: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
-  sauter: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
-  bondir: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
-  sautillant: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
-  sautille: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
-  rebond: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLATFORM),
-  rebondir: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLATFORM),
-  élan: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
-  sursaut: new EffectWord(EffectEnum.JUMP, EV.EVENT_PLAYER),
+  // --- JUMPING ---
+  saut: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  bond: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  sauter: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  bondir: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  sautillant: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  sautille: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  rebond: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  rebondir: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  élan: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  sursaut: new EffectWord(EffectEnum.JUMPING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
 
-  // Effets d'inversion
-  inverser: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  retourner: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  inverse: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  retourne: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  inversé: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  retourné: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  contraire: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  opposé: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  renverser: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
-  renverse: new EffectWord(EffectEnum.INVERT, EV.EVENT_PLATFORM),
+  // --- FORWARD ---
+  avance: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  avancer: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  avant: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  foncer: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  charger: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  progresser: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  pousser: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  propulser: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  sprint: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  accélérer: new EffectWord(EffectEnum.FORWARD, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+
+  // --- BACKWARD ---
+  recul: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  reculer: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  arrière: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  retour: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  retrait: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  reculade: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  rétrograder: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  renverser: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  inverser: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+  retourner: new EffectWord(EffectEnum.BACKWARD, [EV.EVENT_PLATFORM]),
+
+  // --- BOUNCY ---
+  trampoline: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  tremplin: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  ressort: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  élastique: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  caoutchouc: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  souple: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  bondissant: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  rebondissant: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  balle: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+  ballon: new EffectWord(EffectEnum.BOUNCY, [EV.EVENT_PLATFORM, EV.EVENT_PLAYER]),
+
+  // --- GROUNDING ---
+  ancrage: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  ancrer: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  ancré: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  stabiliser: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  stabilité: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  lester: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  plomber: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  solide: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  lourd: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
+  adhérer: new EffectWord(EffectEnum.GROUNDING, [EV.EVENT_PLAYER, EV.EVENT_PLATFORM]),
 };
