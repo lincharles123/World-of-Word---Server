@@ -18,12 +18,4 @@ export class GameDataService {
   findAll(): Promise<Game[]> {
     return this.gameRepository.find();
   }
-
-  findOne(id: number): Promise<Game> {
-    return this.gameRepository.findOneBy({ id });
-  }
-
-  async remove(id: number): Promise<void> {
-    await this.gameRepository.delete(id);
-  }
 }

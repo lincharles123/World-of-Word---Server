@@ -28,7 +28,6 @@ export class GamesService {
     const game = this.games.get(roomId);
     const payload: CreateGameDto = {
       username: game.username,
-      roomId: roomId,
       score: score,
       mobilePlayerNumber: lobby.players.length,
       dateEnd: endDate,

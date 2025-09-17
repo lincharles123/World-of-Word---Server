@@ -4,9 +4,6 @@ export class CreateGameDto {
   @IsString()
   username: string;
 
-  @IsString()
-  roomId: string;
-
   @IsInt()
   score: number;
 

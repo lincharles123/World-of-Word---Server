@@ -8,9 +8,6 @@ export class Game {
   @Column()
   username: string;
 
-  @Column()
-  roomId: string;
-
   @Column({type: 'int'})
   score: number;
 

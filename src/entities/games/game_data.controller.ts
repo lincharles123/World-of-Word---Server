@@ -15,14 +15,4 @@ export class GameDataController {
   findAll(): Promise<Game[]> {
     return this.gamesService.findAll();
   }
-
-  @Get(':id')
-  findOne(@Param('id') id: number): Promise<Game> {
-    return this.gamesService.findOne(id);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: number): Promise<void> {
-    return this.gamesService.remove(id);
-  }
 }
