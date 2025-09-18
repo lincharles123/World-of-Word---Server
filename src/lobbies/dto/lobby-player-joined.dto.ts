@@ -1,4 +1,5 @@
-import { IsString, IsJSON } from 'class-validator';
+import { IsString, IsJSON, IsObject } from 'class-validator';
+import { AvatarDto } from 'src/events/players/dto/avatar.dto';
 
 export class LobbyPlayerJoined {
   @IsString()
@@ -10,6 +11,6 @@ export class LobbyPlayerJoined {
   @IsString()
   socketId: string;
 
-  @IsString()
-  avatar: string;
+  @IsObject()
+  avatar: AvatarDto;
 }

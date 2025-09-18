@@ -6,9 +6,7 @@ import { Lobby } from 'src/lobbies/types';
 
 @Injectable()
 export class GamesService {
-  constructor(
-      private readonly dataService: GameDataService,
-    ) {}
+  constructor(private readonly dataService: GameDataService) {}
   private games: Map<string, Game> = new Map();
 
   startGame(roomId: string, username: string, startDate: Date): void {
@@ -25,16 +23,16 @@ export class GamesService {
   }
 
   endGame(lobby: Lobby, score: number, endDate: Date): void {
-    const roomId = lobby.roomId
+    const roomId = lobby.roomId;
     const game = this.findByRoomId(roomId);
     const payload: CreateGameDto = {
       username: game.username,
       score: score,
       mobilePlayerNumber: lobby.players.length,
-      time: endDate.getTime() - game.startDate.getTime()
-    }
+      time: endDate.getTime() - game.startDate.getTime(),
+    };
 
-    this.dataService.create(payload)
+    this.dataService.create(payload);
     this.games.delete(roomId);
 
     console.log(`🏁 Jeu terminé dans le lobby: ${roomId} avec un score de ${score}`);
@@ -52,8 +50,10 @@ export class GamesService {
         wordHistory: [],
       };
       this.games.set(roomId, newGame);
-  
-      console.log(`🔄 Jeu relancé dans le lobby: ${roomId} pour l'utilisateur: ${oldGame.username}`);
+
+      console.log(
+        `🔄 Jeu relancé dans le lobby: ${roomId} pour l'utilisateur: ${oldGame.username}`,
+      );
     }
   }
 

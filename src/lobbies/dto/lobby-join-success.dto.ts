@@ -1,5 +1,6 @@
 import { IsString } from 'class-validator';
 import { MobilePlayer } from '../types';
+import { AvatarDto } from 'src/events/players/dto/avatar.dto';
 
 export class LobbyJoinSuccessDto {
   @IsString()
@@ -15,5 +16,5 @@ export class LobbyJoinSuccessDto {
   players: MobilePlayer[];
 
   @IsString()
-  avatar: string;
+  avatar: AvatarDto;
 }
