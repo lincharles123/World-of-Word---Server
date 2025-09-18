@@ -15,6 +15,5 @@ export class LobbyJoinSuccessDto {
   @IsString()
   players: MobilePlayer[];
 
-  @IsString()
   avatar: AvatarDto;
 }
