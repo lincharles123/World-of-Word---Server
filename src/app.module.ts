@@ -28,7 +28,7 @@ import { GameDataModule } from './entities/games/game_data.module';
     GamesModule,
     EventsModule,
     PlayersModule,
-    GameDataModule
+    GameDataModule,
   ],
   providers: [WsGateway],
 })

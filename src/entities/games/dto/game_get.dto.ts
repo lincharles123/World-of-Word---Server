@@ -5,7 +5,7 @@ export class GameGetDto {
   @IsOptional()
   @IsString()
   username?: string;
-  
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()

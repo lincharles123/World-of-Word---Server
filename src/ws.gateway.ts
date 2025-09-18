@@ -176,8 +176,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      if(lobby.maxPlayers === lobby.players.length) {
-        console.log(`❌ Le lobby ${lobby.roomId} est plein`)
+      if (lobby.maxPlayers === lobby.players.length) {
+        console.log(`❌ Le lobby ${lobby.roomId} est plein`);
 
         client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
           message: 'Lobby is Full',
@@ -187,8 +187,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      if(lobby.players.find((player) => player.username === dto.username)){
-        console.log(`❌ L'utilisateur ${dto.username} existe dans le lobby ${lobby.roomId}`)
+      if (lobby.players.find((player) => player.username === dto.username)) {
+        console.log(`❌ L'utilisateur ${dto.username} existe dans le lobby ${lobby.roomId}`);
 
         client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
           message: 'Username already exists',
@@ -202,7 +202,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.data.roomId = lobby.roomId;
       client.data.username = dto.username;
-
+      client.data.avatar = dto.avatar;
       client.join(`room:${lobby.roomId}`);
       client.join(`room:${lobby.roomId}:mobiles`);
 
@@ -211,7 +211,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         username: player.username,
         socketId: player.socketId,
         players: lobby.players,
-        avatar: dto.avatar
+        avatar: dto.avatar,
       };
 
       this.server.to(client.id).emit(WsGateway.EV.LOBBY_JOIN_SUCCESS, joinSuccessPayload);
@@ -220,7 +220,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         roomId: lobby.roomId,
         username: player.username,
         socketId: player.socketId,
-        avatar: dto.avatar
+        avatar: dto.avatar,
       };
 
       client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, playerJoinedPayload);
@@ -249,12 +249,12 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.games.startGame(roomId, client.data.username, new Date());
 
     const words = Object.keys(effectMap);
-    const wordTypes = words.map(word => {
+    const wordTypes = words.map((word) => {
       let types = effectMap[word]?.type;
       if (!types) {
         throw new Error('No type found for word: ' + word);
       }
-      const mappedTypes = types.map(t => {
+      const mappedTypes = types.map((t) => {
         if (t === 'event:player' || t === 'event:music' || t === 'event:overlay') {
           return t;
         } else if (t === 'event:platform') {
@@ -297,6 +297,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.lobbies.reset(roomId);
   }
 
+  @SubscribeMessage(WsGateway.EV.GAME_RETRY)
   onGameRetry(@ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
     const lobby = this.lobbyInGameCheck(roomId, client);
@@ -307,7 +308,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_RETRY_NOTIFY, { roomId });
 
-    console.log(`🔄 Jeu relancé dans le lobby: ${roomId} pour l'utilisateur: ${client.data.username}`);
     return;
   }
 
@@ -353,7 +353,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     console.log('dto received:', dto);
-    if(!dto.type) {
+    if (!dto.type) {
       client.emit(WsGateway.EV.EVENT_ERROR, {
         message: 'Type is required',
         code: 'TYPE_REQUIRED',
@@ -362,20 +362,35 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     const game = this.games.findByRoomId(roomId);
-    const payload = this.event.getPayload(word,  client.data.username, dto.type);
+    const payload = this.event.getPayload(word, client.data.username, dto.type);
     console.log('Payload generated:', payload);
     for (const [key, value] of payload) {
       if (key === 'event:player') {
         this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLAYER_NOTIFY, value);
-        game.wordHistory.push({ username: client.data.username, word: word, date: new Date() });
+        game.wordHistory.push({
+          username: client.data.username,
+          word: word,
+          date: new Date(),
+          avatar: client.data.avatar,
+        });
         this.emitGameWordNotify(roomId, game.wordHistory);
       } else if (key === 'event:music') {
         this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_MUSIC_NOTIFY, value);
-        game.wordHistory.push({ username: client.data.username, word: word, date: new Date() });
+        game.wordHistory.push({
+          username: client.data.username,
+          word: word,
+          date: new Date(),
+          avatar: client.data.avatar,
+        });
         this.emitGameWordNotify(roomId, game.wordHistory);
       } else if (key === 'event:overlay') {
         this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_OVERLAY_NOTIFY, value);
-        game.wordHistory.push({ username: client.data.username, word: word, date: new Date() });
+        game.wordHistory.push({
+          username: client.data.username,
+          word: word,
+          date: new Date(),
+          avatar: client.data.avatar,
+        });
         this.emitGameWordNotify(roomId, game.wordHistory);
       } else {
         client.emit(WsGateway.EV.EVENT_ERROR, {
@@ -384,7 +399,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
       }
     }
-    
+
     client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
     return;
   }
@@ -427,15 +442,19 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const game = this.games.findByRoomId(roomId);
 
     const payload: EventPlatformNotifyDto = {
-      "username": client.data.username,
-      "word": word,
-      "effect": this.platform.getPlatformEffect(word),
-      "platform": platform,
+      username: client.data.username,
+      word: word,
+      effect: this.platform.getPlatformEffect(word),
+      platform: platform,
     };
-    
 
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLATFORM_NOTIFY, payload);
-    game.wordHistory.push({ username: client.data.username, word: word, date: new Date() });
+    game.wordHistory.push({
+      username: client.data.username,
+      word: word,
+      date: new Date(),
+      avatar: client.data.avatar,
+    });
     this.emitGameWordNotify(roomId, game.wordHistory);
 
     client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });

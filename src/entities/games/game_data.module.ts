@@ -8,6 +8,6 @@ import { GameDataController } from './game_data.controller';
   imports: [TypeOrmModule.forFeature([Game])],
   providers: [GameDataService],
   controllers: [GameDataController],
-  exports: [GameDataService]
+  exports: [GameDataService],
 })
 export class GameDataModule {}

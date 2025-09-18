@@ -1,3 +1,5 @@
+import { AvatarDto } from 'src/events/players/dto/avatar.dto';
+
 export type Game = {
   roomId: string;
   username: string;
@@ -12,6 +14,7 @@ export type WordHistory = {
   username: string;
   word: string;
   date: Date;
+  avatar: AvatarDto;
 };
 
 export type PlatformSet = {
@@ -22,5 +25,5 @@ export type PlatformSet = {
 export type Platform = {
   x: number;
   y: number;
-  width: number
+  width: number;
 };

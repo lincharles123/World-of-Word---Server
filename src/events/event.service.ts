@@ -20,7 +20,7 @@ export class EventService {
   getPayload(word: string, username: string, type: string): Map<string, EventGlobalNotifyDto> {
     const wordLower = word.toLowerCase();
     console.log('Getting payload for word:', wordLower);
-    if(!effectMap[wordLower] || type === 'event:platform') {
+    if (!effectMap[wordLower] || type === 'event:platform') {
       console.log('No effect found for word:', wordLower);
       return new Map([['unknown', null]]);
     }
@@ -31,7 +31,7 @@ export class EventService {
       const dto = new EventGlobalNotifyDto();
       dto.word = wordLower;
       dto.effect = this.playersService.getPlayerEffect(wordLower);
-      if(dto.effect === EffectEnum.NONE) {
+      if (dto.effect === EffectEnum.NONE) {
         console.log('No player effect found for word:', wordLower);
         return new Map([['unknown', null]]);
       }
@@ -39,13 +39,13 @@ export class EventService {
         username: username,
         word: dto.word,
         effect: dto.effect,
-      }
+      };
       return new Map([[PathEnum.PLAYER, payloadPlayer]]);
     } else if (rooting.includes(PathEnum.MUSIC)) {
       const musicDto = new EventGlobalNotifyDto();
       musicDto.word = wordLower;
       musicDto.effect = this.musicsService.getMusicEffect(wordLower);
-      if(musicDto.effect === EffectEnum.NONE) {
+      if (musicDto.effect === EffectEnum.NONE) {
         console.log('No music effect found for word:', wordLower);
         return new Map([['unknown', null]]);
       }
@@ -53,13 +53,13 @@ export class EventService {
         username: username,
         word: musicDto.word,
         effect: musicDto.effect,
-      }
+      };
       return new Map([[PathEnum.MUSIC, payloadMusic]]);
     } else if (rooting.includes(PathEnum.OVERLAY)) {
       const overlayDto = new EventGlobalNotifyDto();
       overlayDto.word = wordLower;
       overlayDto.effect = this.overlayService.getOverlayEffect(wordLower);
-      if(overlayDto.effect === EffectEnum.NONE) {
+      if (overlayDto.effect === EffectEnum.NONE) {
         console.log('No overlay effect found for word:', wordLower);
         return new Map([['unknown', null]]);
       }
@@ -67,7 +67,7 @@ export class EventService {
         username: username,
         word: overlayDto.word,
         effect: overlayDto.effect,
-      }
+      };
       return new Map([[PathEnum.OVERLAY, payloadOverlay]]);
     } else {
       throw new Error('Invalid rooting type');
