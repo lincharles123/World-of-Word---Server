@@ -211,6 +211,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         username: player.username,
         socketId: player.socketId,
         players: lobby.players,
+        avatar: dto.avatar
       };
 
       this.server.to(client.id).emit(WsGateway.EV.LOBBY_JOIN_SUCCESS, joinSuccessPayload);
@@ -219,6 +220,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         roomId: lobby.roomId,
         username: player.username,
         socketId: player.socketId,
+        avatar: dto.avatar
       };
 
       client.to(`room:${lobby.roomId}`).emit(WsGateway.EV.LOBBY_PLAYER_JOINED, playerJoinedPayload);
@@ -244,7 +246,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       roomId: roomId,
     };
 
-    this.games.startGame(roomId, 'host', new Date());
+    this.games.startGame(roomId, client.data.username, new Date());
 
     const words = Object.keys(effectMap);
     const wordTypes = words.map(word => {

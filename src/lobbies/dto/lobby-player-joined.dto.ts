@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsString, IsJSON } from 'class-validator';
 
 export class LobbyPlayerJoined {
   @IsString()
@@ -9,4 +9,7 @@ export class LobbyPlayerJoined {
 
   @IsString()
   socketId: string;
+
+  @IsString()
+  avatar: string;
 }
