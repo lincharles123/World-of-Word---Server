@@ -172,6 +172,28 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
+      if(lobby.maxPlayers === lobby.players.length) {
+        console.log(`❌ Le lobby ${lobby.roomId} est plein`)
+
+        client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
+          message: 'Lobby is Full',
+          code: 'LOBBY_FULL',
+        });
+
+        return;
+      }
+
+      if(lobby.players.find((player) => player.username === dto.username)){
+        console.log(`❌ L'utilisateur ${dto.username} existe dans le lobby ${lobby.roomId}`)
+
+        client.emit(WsGateway.EV.LOBBY_JOIN_ERROR, {
+          message: 'Username already exists',
+          code: 'USERNAME_ALREADY_EXIST',
+        });
+
+        return;
+      }
+
       const player = this.lobbies.addMobile(lobby, dto.username, client.id);
 
       client.data.roomId = lobby.roomId;
@@ -250,10 +272,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(WsGateway.EV.GAME_END)
   onGameEnd(@MessageBody() dto: GameEndDto, @ConnectedSocket() client: Socket) {
     const roomId = client.data.roomId;
-    const lobby = this.lobbies.findByRoomId(roomId);
+    const lobby: Lobby = this.lobbies.findByRoomId(roomId);
 
     if (lobby) {
-      if (lobby.state && lobby.state !== LobbyState.PENDING) {
+      if (lobby.state && lobby.state !== LobbyState.INGAME) {
         return;
       }
     }
@@ -262,7 +284,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       roomId: roomId,
     };
 
-    this.games.endGame(roomId, dto.score, new Date());
+    this.games.endGame(lobby, dto.score, new Date());
 
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_END_NOTIFY, payload);
 

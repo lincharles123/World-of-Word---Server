@@ -7,6 +7,9 @@ import { GamesModule } from './games/games.module';
 import { AdminModule } from './admin/admin.module';
 import { EventsModule } from './events/events.module';
 import { PlayersModule } from './events/players/players.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Game } from './entities/games/game.entity';
+import { GameDataModule } from './entities/games/game_data.module';
 
 @Module({
   imports: [
@@ -14,11 +17,18 @@ import { PlayersModule } from './events/players/players.module';
       rootPath: join(process.cwd(), 'public'),
       serveRoot: '/',
     }),
+    TypeOrmModule.forRoot({
+      type: 'sqlite',
+      database: 'games.db',
+      entities: [Game],
+      synchronize: true,
+    }),
     LobbiesModule,
     AdminModule,
     GamesModule,
     EventsModule,
     PlayersModule,
+    GameDataModule
   ],
   providers: [WsGateway],
 })
