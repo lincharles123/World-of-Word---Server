@@ -17,6 +17,7 @@ export class GamesService {
       username,
       startDate,
       map: new Map<string, any>(),
+      wordHistory: [],
     };
     this.games.set(roomId, newGame);
 
@@ -25,7 +26,7 @@ export class GamesService {
 
   endGame(lobby: Lobby, score: number, endDate: Date): void {
     const roomId = lobby.roomId
-    const game = this.games.get(roomId);
+    const game = this.findByRoomId(roomId);
     const payload: CreateGameDto = {
       username: game.username,
       score: score,
@@ -53,7 +54,7 @@ export class GamesService {
   }
 
   removePlatform(roomId: string, id: string): void {
-    const game = this.games.get(roomId);
+    const game = this.findByRoomId(roomId);
 
     if (game) {
       let map = game.map;
@@ -64,7 +65,7 @@ export class GamesService {
   }
 
   addEffectToPlatform(roomId: string, id: string, effect: string): void {
-    const game = this.games.get(roomId);
+    const game = this.findByRoomId(roomId);
     if (game) {
       if (game.map.has(id)) {
         game.map.get(id).effect.push(effect);
@@ -82,5 +83,9 @@ export class GamesService {
         );
       }
     }
+  }
+
+  findByRoomId(roomId: string): Game {
+    return this.games.get(roomId);
   }
 }

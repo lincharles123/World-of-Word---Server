@@ -5,6 +5,13 @@ export type Game = {
   map: Map<string, PlatformSet>;
   endDate?: Date;
   score?: number;
+  wordHistory: WordHistory[];
+};
+
+export type WordHistory = {
+  username: string;
+  word: string;
+  date: Date;
 };
 
 export type PlatformSet = {

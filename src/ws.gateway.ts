@@ -38,6 +38,7 @@ import { effectMap } from './events/effect-map';
 import { EventService } from './events/event.service';
 import { EventGlobalDto } from './events/dto/event-global.dto';
 import { EventPlatformDto } from './events/platforms/dto/event-platform.dto';
+import { WordHistory } from './games/types';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -71,6 +72,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     GAME_PLATFORM_REMOVE: 'game:platform:remove',
     GAME_PLATFORM_REMOVE_NOTIFY: 'game:platform:remove:notify',
     GAME_WORD: 'game:word',
+    GAME_WORD_NOTIFY: 'game:word:notify',
     EVENT_GLOBAL: 'event:add',
     EVENT_PLAYER_NOTIFY: 'event:player:notify',
     EVENT_MUSIC_NOTIFY: 'event:music:notify',
@@ -341,15 +343,22 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return;
     }
+    const game = this.games.findByRoomId(roomId);
     const payload = this.event.getPayload(word,  client.data.username, dto.type);
     console.log('Payload generated:', payload);
     for (const [key, value] of payload) {
       if (key === 'event:player') {
         this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLAYER_NOTIFY, value);
+        game.wordHistory.push({ username: client.data.username, word: word, date: new Date() });
+        this.emitGameWordNotify(roomId, game.wordHistory);
       } else if (key === 'event:music') {
         this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_MUSIC_NOTIFY, value);
+        game.wordHistory.push({ username: client.data.username, word: word, date: new Date() });
+        this.emitGameWordNotify(roomId, game.wordHistory);
       } else if (key === 'event:overlay') {
         this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_OVERLAY_NOTIFY, value);
+        game.wordHistory.push({ username: client.data.username, word: word, date: new Date() });
+        this.emitGameWordNotify(roomId, game.wordHistory);
       } else {
         client.emit(WsGateway.EV.EVENT_ERROR, {
           message: 'Unknown payload key',
@@ -360,6 +369,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     
     client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
     return;
+  }
+
+  emitGameWordNotify(roomId: string, wordHistory: WordHistory[]) {
+    this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_WORD_NOTIFY, wordHistory);
   }
 
   @SubscribeMessage(WsGateway.EV.EVENT_PLATFORM)
@@ -393,6 +406,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.games.addEffectToPlatform(roomId, platform, this.platform.getPlatformEffect(word));
 
+    const game = this.games.findByRoomId(roomId);
+
     const payload: EventPlatformNotifyDto = {
       "username": client.data.username,
       "word": word,
@@ -402,6 +417,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     
 
     this.server.to(lobby.hostSocketId).emit(WsGateway.EV.EVENT_PLATFORM_NOTIFY, payload);
+    game.wordHistory.push({ username: client.data.username, word: word, date: new Date() });
+    this.emitGameWordNotify(roomId, game.wordHistory);
 
     client.emit(WsGateway.EV.EVENT_SUCCESS, { roomId: roomId });
 
