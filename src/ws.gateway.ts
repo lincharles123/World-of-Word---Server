@@ -209,6 +209,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         username: player.username,
         socketId: player.socketId,
         players: lobby.players,
+        avatar: dto.avatar
       };
 
       this.server.to(client.id).emit(WsGateway.EV.LOBBY_JOIN_SUCCESS, joinSuccessPayload);
