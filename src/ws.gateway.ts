@@ -397,13 +397,16 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
 
-    this.games.addPlatform(roomId, dto.id, dto.x, dto.y);
+    this.games.addPlatform(roomId, dto.id, dto.x, dto.y, dto.width);
 
     console.log(`Adding platform ${dto.id} in room ${roomId}`);
 
     const payload: GamePlatformAddNotifyDto = {
       roomId: roomId,
       id: dto.id,
+      x: dto.x,
+      y: dto.y,
+      width: dto.width,
     };
 
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_PLATFORM_ADD_NOTIFY, payload);

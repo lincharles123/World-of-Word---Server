@@ -15,5 +15,5 @@ export type PlatformSet = {
 export type Platform = {
   x: number;
   y: number;
-  // width: number
+  width: number
 };

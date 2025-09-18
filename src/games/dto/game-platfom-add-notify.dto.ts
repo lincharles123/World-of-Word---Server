@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 
 export class GamePlatformAddNotifyDto {
   @IsString()
@@ -6,4 +6,13 @@ export class GamePlatformAddNotifyDto {
 
   @IsString()
   id: string;
+
+  @IsNumber()
+  x: number;
+
+  @IsNumber()
+  y: number;
+
+  @IsNumber()
+  width: number;
 }

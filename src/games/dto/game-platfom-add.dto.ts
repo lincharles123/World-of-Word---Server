@@ -9,4 +9,7 @@ export class GamePlatformAddDto {
 
   @IsNumber()
   y: number;
+
+  @IsNumber()
+  width: number;
 }

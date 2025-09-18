@@ -31,14 +31,14 @@ export class GamesService {
     console.log(`🏁 Jeu terminé dans le lobby: ${roomId} avec un score de ${score}`);
   }
 
-  addPlatform(roomId: string, id: string, x: number, y: number): void {
+  addPlatform(roomId: string, id: string, x: number, y: number, width: number): void {
     const game = this.games.get(roomId);
 
     if (game) {
       if (game.map.has(id)) {
-        game.map.get(id).platforms.push({ x, y });
+        game.map.get(id).platforms.push({ x, y, width });
       } else {
-        game.map.set(id, { platforms: [{ x, y }], effect: [] });
+        game.map.set(id, { platforms: [{ x, y, width }], effect: [] });
       }
       console.log(`➕ Plateforme ajoutée: ${id} dans le jeu du lobby: ${roomId}`);
     }
