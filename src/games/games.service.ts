@@ -40,6 +40,23 @@ export class GamesService {
     console.log(`🏁 Jeu terminé dans le lobby: ${roomId} avec un score de ${score}`);
   }
 
+  retryGame(lobby: Lobby) {
+    const roomId = lobby.roomId;
+    const oldGame = this.findByRoomId(roomId);
+    if (oldGame) {
+      const newGame: Game = {
+        roomId,
+        username: oldGame.username,
+        startDate: new Date(),
+        map: new Map<string, any>(),
+        wordHistory: [],
+      };
+      this.games.set(roomId, newGame);
+  
+      console.log(`🔄 Jeu relancé dans le lobby: ${roomId} pour l'utilisateur: ${oldGame.username}`);
+    }
+  }
+
   addPlatform(roomId: string, id: string, x: number, y: number, width: number): void {
     const game = this.games.get(roomId);
 
