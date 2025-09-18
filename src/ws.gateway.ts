@@ -67,6 +67,8 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     GAME_START_NOTIFY: 'game:start:notify',
     GAME_END: 'game:end',
     GAME_END_NOTIFY: 'game:end:notify',
+    GAME_RETRY: 'game:retry',
+    GAME_RETRY_NOTIFY: 'game:retry:notify',
     GAME_PLATFORM_ADD: 'game:platform:add',
     GAME_PLATFORM_ADD_NOTIFY: 'game:platform:add:notify',
     GAME_PLATFORM_REMOVE: 'game:platform:remove',
@@ -291,6 +293,20 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_END_NOTIFY, payload);
 
     this.lobbies.reset(roomId);
+  }
+
+  onGameRetry(@ConnectedSocket() client: Socket) {
+    const roomId = client.data.roomId;
+    const lobby = this.lobbyInGameCheck(roomId, client);
+
+    if (!lobby) return;
+
+    this.games.retryGame(lobby);
+
+    this.server.to(`room:${roomId}:mobiles`).emit(WsGateway.EV.GAME_RETRY_NOTIFY, { roomId });
+
+    console.log(`🔄 Jeu relancé dans le lobby: ${roomId} pour l'utilisateur: ${client.data.username}`);
+    return;
   }
 
   lobbyInGameCheck(roomId: string, client: Socket): Lobby | undefined {
