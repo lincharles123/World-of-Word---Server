@@ -1,8 +1,10 @@
+import { AvatarDto } from 'src/events/players/dto/avatar.dto';
 import { LobbyState } from './enums/lobby-state.enum';
 
 export type MobilePlayer = {
   username: string;
   socketId: string;
+  avatar: AvatarDto;
 };
 
 export type Lobby = {

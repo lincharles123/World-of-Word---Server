@@ -198,7 +198,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const player = this.lobbies.addMobile(lobby, dto.username, client.id);
+      const player = this.lobbies.addMobile(lobby, dto.username, client.id, dto.avatar);
 
       client.data.roomId = lobby.roomId;
       client.data.username = dto.username;
@@ -211,7 +211,6 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         username: player.username,
         socketId: player.socketId,
         players: lobby.players,
-        avatar: dto.avatar,
       };
 
       this.server.to(client.id).emit(WsGateway.EV.LOBBY_JOIN_SUCCESS, joinSuccessPayload);
