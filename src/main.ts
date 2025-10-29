@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { AppModule } from './app.module';
-import { join } from 'path';
 import { existsSync } from 'fs';
+import { join } from 'path';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -12,7 +12,7 @@ async function bootstrap() {
   const publicPath = join(__dirname, '..', 'public');
   const adminDashboardPath = join(publicPath, 'admin-dashboard.html');
 
-  console.log('📁 Public path:', publicPath);
+  console.log('📁 public path:', publicPath);
   console.log('📄 Admin dashboard exists:', existsSync(adminDashboardPath));
   console.log('📄 Admin dashboard path:', adminDashboardPath);
 
